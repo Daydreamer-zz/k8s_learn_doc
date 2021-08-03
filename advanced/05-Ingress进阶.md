@@ -55,7 +55,7 @@ spec:
 
 ## 1.Redirect
 
-**nginx.ingress.kubernetes.io/permanent-redirect**
+`nginx.ingress.kubernetes.io/permanent-redirect`
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -81,7 +81,7 @@ spec:
 
 ## 2.Rewrite
 
-**nginx.ingress.kubernetes.io/rewrite-target**
+`nginx.ingress.kubernetes.io/rewrite-target`
 
 在这个入口定义中，由 (.*) 捕获的任何字符都将分配给占位符 $2，然后将其用作 rewrite-target 注释中的参数
 
@@ -115,7 +115,7 @@ spec:
 
 ## 3.SSL
 
-**nginx.ingress.kubernetes.io/ssl-redirect**
+`nginx.ingress.kubernetes.io/ssl-redirect`
 
 #### 3.1 OpenSSL生成测试https证书
 
@@ -271,7 +271,7 @@ spec:
 
 一个Annotations方式配置ip白名单示例：
 
-**nginx.ingress.kubernetes.io/whitelist-source-range** 注释指定允许的客户端 IP 源范围。该值是逗号分隔的 CIDR 列表，例如10.0.0.0/24,172.10.0.1。
+`nginx.ingress.kubernetes.io/whitelist-source-range` 注释指定允许的客户端 IP 源范围。该值是逗号分隔的 CIDR 列表，例如10.0.0.0/24,172.10.0.1。
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -338,7 +338,7 @@ metadata:
 
 ## 5.添加自定义配置
 
-使用注解 **nginx.ingress.kubernetes.io/server-snippet** 可以在服务器配置块中添加自定义配置。
+使用注解 `nginx.ingress.kubernetes.io/server-snippet` 可以在服务器配置块中添加自定义配置。
 
 可以实现单个ingress资源更细粒度的配置，例如：单个ingress配置IP黑名单
 
@@ -368,4 +368,75 @@ spec:
 ```
 
 ## 6.匹配请求头
+
+使用`nginx.ingress.kubernetes.io/server-snippet` 自定义配置实现
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/server-snippet: | #直接添加nginx原生配置即可，
+        set $agentflag 0;
+
+        if ($http_user_agent ~* "(Mobile)" ){
+          set $agentflag 1;
+        }
+
+        if ( $agentflag = 1 ) {
+          return 301 https://m.example.com;
+        }
+spec:
+  rules:
+    - host: node1.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+```
+
+## 7.速率限制
+
+这些注释定义了连接和传输速率的限制。这些可用于缓解[DDoS 攻击](https://www.nginx.com/blog/mitigating-ddos-attacks-with-nginx-and-nginx-plus)。
+
+- `nginx.ingress.kubernetes.io/limit-connections`：单个 IP 地址允许的并发连接数。超过此限制时将返回 503 错误。
+- `nginx.ingress.kubernetes.io/limit-rps`：每秒从给定 IP 接受的请求数。突发限制设置为此限制乘以突发倍数，默认倍数为5。当客户端超过此限制时，返回[limit-req-status-code ](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#limit-req-status-code)**default:** 503。
+- `nginx.ingress.kubernetes.io/limit-rpm`：每分钟从给定 IP 接受 的请求数。突发限制设置为此限制乘以突发倍数，默认倍数为5。当客户端超过此限制时，返回[limit-req-status-code ](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#limit-req-status-code)**default:** 503。
+- `nginx.ingress.kubernetes.io/limit-burst-multiplier`：突发大小限制速率的乘数。默认突发乘数为 5，此注释覆盖默认乘数。当客户端超过此限制时，[将](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#limit-req-status-code) 返回[limit-req-status-code ](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#limit-req-status-code)**default:** 503。
+- `nginx.ingress.kubernetes.io/limit-rate-after`: 初始千字节数，之后对给定连接的响应的进一步传输将受到速率限制。此功能必须在启用[代理缓冲的情况](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#proxy-buffering)下使用。
+- `nginx.ingress.kubernetes.io/limit-rate`：每秒允许发送到给定连接的千字节数。零值禁用速率限制。此功能必须与启用[代理缓冲](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#proxy-buffering)一起使用。
+- `nginx.ingress.kubernetes.io/limit-whitelist`：要从速率限制中排除的客户端 IP 源范围。该值是逗号分隔的 CIDR 列表。
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/limit-rps: "1"
+spec:
+  rules:
+    - host: node1.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+```
+
+
 
