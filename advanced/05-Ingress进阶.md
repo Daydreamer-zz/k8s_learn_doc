@@ -438,5 +438,77 @@ spec:
             pathType: Prefix
 ```
 
+## 8.灰度/金丝雀发布
 
+在某些情况下，您可能希望通过向与生产服务不同的服务发送少量请求来“金丝雀”一组新的更改。金丝雀注解使 Ingress 规范能够根据应用的规则充当路由请求的替代服务。`nginx.ingress.kubernetes.io/canary: "true"`设置后可以启用以下用于配置金丝雀的注释：
+
+- `nginx.ingress.kubernetes.io/canary-by-header`：用于通知 Ingress 将请求路由到 Canary Ingress 中指定的服务的标头。当请求标头设置为 时`always`，它将被路由到金丝雀。当标头设置为 时`never`，它永远不会被路由到金丝雀。对于任何其他值，标头将被忽略，并按优先级将请求与其他金丝雀规则进行比较。
+- `nginx.ingress.kubernetes.io/canary-by-header-value`：要匹配的标头值，用于通知 Ingress 将请求路由到 Canary Ingress 中指定的服务。当请求头设置为这个值时，它将被路由到金丝雀。对于任何其他标头值，标头将被忽略，并按优先级将请求与其他金丝雀规则进行比较。此注释必须与 一起使用。注释是 的扩展，`nginx.ingress.kubernetes.io/canary-by-header`允许自定义标头值而不是使用硬编码值。如果`nginx.ingress.kubernetes.io/canary-by-header`未定义注释，则没有任何影响。
+- `nginx.ingress.kubernetes.io/canary-by-header-pattern`：这与`canary-by-header-value`PCRE 正则表达式匹配的方式相同。请注意，`canary-by-header-value`设置此注释时将被忽略。当给定的 Regex 在请求处理过程中导致错误时，该请求将被视为不匹配。
+- `nginx.ingress.kubernetes.io/canary-by-cookie`：用于通知 Ingress 将请求路由到 Canary Ingress 中指定的服务的 cookie。当 cookie 值设置为 时`always`，它将被路由到金丝雀。当 cookie 设置为 时`never`，它永远不会被路由到金丝雀。对于任何其他值，cookie 将被忽略，并按优先级将请求与其他金丝雀规则进行比较。
+- `nginx.ingress.kubernetes.io/canary-weight`：应路由到 Canary Ingress 中指定的服务的基于整数 (0 - 100) 的随机请求百分比。权重为 0 意味着此金丝雀规则不会向 Canary 入口中的服务发送任何请求。权重为 100 意味着所有请求都将发送到 Ingress 中指定的替代服务。
+
+Canary 规则按优先顺序进行评估。优先级如下： `canary-by-header -> canary-by-cookie -> canary-weight`
+
+**请注意**，当你标记的侵入，金丝雀，那么所有其他非金丝雀注释将被忽略（从相应的主入口继承）除`nginx.ingress.kubernetes.io/load-balance`，`nginx.ingress.kubernetes.io/upstream-hash-by`以及[相关的会话亲和力的注解](https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md#session-affinity)。如果要在忽略会话亲缘关系时恢复Canary的原始行为，请在非 Canary 入口定义上`nginx.ingress.kubernetes.io/affinity-canary-behavior`使用 value设置注释`legacy`。
+
+**已知限制**
+
+目前，每个 Ingress 规则最多可以应用一个 Canary Ingress。
+
+
+
+### 8.1 根据权重路由到新版本
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-canary
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/canary: "true" #此项必须设置为true才可以支持同一个域名金丝雀发布
+    nginx.ingress.kubernetes.io/canary-weight: "50"  #流量请求到新版本的权重
+spec:
+  rules:
+    - host: node1.com #和之前的旧版本允许同一个域名
+      http:
+        paths:
+          - backend:
+              service:
+                name: nginx-svc-v2
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+```
+
+### 8.2 根据请求头路由到新版本
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example-canary
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/canary: "true" #此项必须设置为true才可以支持同一个域名金丝雀发布
+    nginx.ingress.kubernetes.io/canary-weight: "50"  #流量请求到新版本的权重
+    nginx.ingress.kubernetes.io/canary-by-header: "user"
+    nginx.ingress.kubernetes.io/canary-by-header-value: "canary"
+spec:
+  rules:
+    - host: node1.com #和之前的旧版本允许同一个域名
+      http:
+        paths:
+          - backend:
+              service:
+                name: nginx-svc-v2
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+```
 
