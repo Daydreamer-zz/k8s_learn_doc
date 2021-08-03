@@ -55,7 +55,7 @@ spec:
 
 ## 1.Redirect
 
-nginx.ingress.kubernetes.io/permanent-redirect
+**nginx.ingress.kubernetes.io/permanent-redirect**
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -81,7 +81,7 @@ spec:
 
 ## 2.Rewrite
 
-nginx.ingress.kubernetes.io/rewrite-target
+**nginx.ingress.kubernetes.io/rewrite-target**
 
 在这个入口定义中，由 (.*) 捕获的任何字符都将分配给占位符 $2，然后将其用作 rewrite-target 注释中的参数
 
@@ -115,21 +115,21 @@ spec:
 
 ## 3.SSL
 
-nginx.ingress.kubernetes.io/ssl-redirect
+**nginx.ingress.kubernetes.io/ssl-redirect**
 
-#### OpenSSL生成测试https证书
+#### 3.1 OpenSSL生成测试https证书
 
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=node1.com"
 ```
 
-#### 导入证书文件Secret
+#### 3.2 导入证书文件Secret
 
 ```bash
 kubectl create secret tls node1.com --key=tls.key --cert=tls.crt
 ```
 
-#### Ingress中使用
+#### 3.3 Ingress中使用
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -157,7 +157,7 @@ spec:
       secretName: node1.com  #指定tls类型的secret
 ```
 
-#### Dashboard配置自定义证书
+#### 3.4 Dashboard配置自定义证书
 
 将正规机构颁发的证书创建为tls类型的secret然后修改dashboard的deployment资源
 
@@ -229,7 +229,7 @@ spec:
           effect: NoSchedule
 ```
 
-#### 为dashboard添加ingress资源
+#### 3.5 为dashboard添加ingress资源
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -267,9 +267,105 @@ spec:
 
 黑名单可以使用ConfigMap去配置，白名单建议使用Annotations去配置。
 
-
+### 4.1 Annotations配置白名单
 
 一个Annotations方式配置ip白名单示例：
 
-nginx.ingress.kubernetes.io/whitelist-source-range 注释指定允许的客户端 IP 源范围。该值是逗号分隔的 CIDR 列表，例如10.0.0.0/24,172.10.0.1。
+**nginx.ingress.kubernetes.io/whitelist-source-range** 注释指定允许的客户端 IP 源范围。该值是逗号分隔的 CIDR 列表，例如10.0.0.0/24,172.10.0.1。
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/whitelist-source-range: 192.168.2.3
+spec:
+  rules:
+    - host: node1.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+```
+
+### 4.2 Configmap配置黑名单
+
+一个Configmap方式配置IP黑名单，对k8s集群所有ingress资源都生效，直接修改ingress-nginx命名空间下的ingress-nginx-controller的ConfigMap
+
+```bash
+kubectl -n ingress-nginx edit configmaps ingress-nginx-controller
+```
+
+加入如下内容
+
+```yaml
+data:
+  block-cidrs: 192.168.2.3 #对整个k8s集群生效，以逗号分隔，可以配置多个IP或者网段
+```
+
+完整的ConfigMap资源配置
+
+```yaml
+apiVersion: v1
+data:
+  block-cidrs: 192.168.2.3 #对整个k8s集群生效，以逗号分隔，可以配置多个IP或者网段
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: ingress-nginx
+    meta.helm.sh/release-namespace: ingress-nginx
+  creationTimestamp: "2021-08-02T06:59:02Z"
+  labels:
+    app.kubernetes.io/component: controller
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/version: 0.47.0
+    helm.sh/chart: ingress-nginx-3.34.0
+  name: ingress-nginx-controller
+  namespace: ingress-nginx
+  resourceVersion: "44659"
+  uid: 2f55fb06-b072-49d4-8bc8-3c62850f494b
+```
+
+## 5.添加自定义配置
+
+使用注解 **nginx.ingress.kubernetes.io/server-snippet** 可以在服务器配置块中添加自定义配置。
+
+可以实现单个ingress资源更细粒度的配置，例如：单个ingress配置IP黑名单
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/server-snippet: | #直接添加nginx原生配置即可，
+        deny 192.168.2.3;
+        allow all;
+spec:
+  rules:
+    - host: node1.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+```
+
+## 6.匹配请求头
 
