@@ -512,3 +512,113 @@ spec:
             pathType: Prefix
 ```
 
+## 9.自定义错误页面
+
+### 9.1 单独的error_page
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/server-snippet: | #直接添加nginx原生配置即可，
+        error_page   500 502 503 504  /50x.html; #nginx原生error_page配置
+        location = /50x.html {
+          root   /usr/share/nginx/html;
+        }
+
+spec:
+  rules:
+    - host: node1.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+```
+
+### 9.2 ingress的custom-error
+
+自定义错误文档：https://github.com/kubernetes/ingress-nginx/tree/nginx-0.20.0/docs/examples/customization/custom-errors
+
+官方自定义错误配置资源：https://github.com/kubernetes/ingress-nginx/blob/nginx-0.20.0/docs/examples/customization/custom-errors/custom-default-backend.yaml
+
+修改ingress-corollor资源，args添加`--default-backend-service`参数
+
+```bash
+kubectl -n ingress-nginx edit daemonsets.apps ingress-nginx-controller
+```
+
+```yaml
+--default-backend-service=namespace/servicename #格式命名空间/service名，这个service应该只返回一个错误页面
+```
+
+创建自定义错误资源
+
+```bash
+kubectl -n ingress-nginx create -f custom-default-backend.yaml
+```
+
+修改名为`ingress-nginx-controller`的ConfigMap添加`custom-http-errors`
+
+```yaml
+data:
+  custom-http-errors: 404,403 #配置哪些错误状态码需要跳转到指定页面
+```
+
+## 10 Basic Authentication
+
+安装htpasswd工具
+
+```bash
+apt-get install apache2-utils
+```
+
+生成密码文件
+
+```bash
+htpasswd -c auth admin
+```
+
+生成secret
+
+```bash
+kubectl create secret generic basic-auth --from-file=auth
+```
+
+Ingress资源中使用
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: example
+  namespace: default
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/auth-type: basic #指定认证类型
+    nginx.ingress.kubernetes.io/auth-secret: basic-auth #认证文件的secret
+    nginx.ingress.kubernetes.io/auth-realm: "Pls input password" #提示信息
+spec:
+  rules:
+    - host: node1.com 
+      http:
+        paths:
+          - backend:
+              service:
+                name: nginx-svc
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+```
+
+
+
