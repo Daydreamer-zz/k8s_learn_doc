@@ -622,38 +622,80 @@ spec:
 
 ## 11.kube-prometheus监控Ingress
 
-通过additional configuration的方式配置ingress pod的自动发现，具体配置参考文档：https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/additional-scrape-config.md
+通过ServiceMonitor配置监控
 
-官方监控配置：https://github.com/kubernetes/ingress-nginx/tree/main/deploy/prometheus
+### 11.1 修改默认ClusterRole权限
 
-自动发现的additional configuration：
+默认的名为prometheus-k8s的ClusterRole权限不足需要添加权限
+
 ```yaml
-global:
-  scrape_interval: 10s
-scrape_configs:
-- job_name: 'ingress-nginx-endpoints'
-  kubernetes_sd_configs:
-  - role: pod
-    namespaces:
-      names:
-      - ingress-nginx
-  relabel_configs:
-  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-    action: keep
-    regex: true
-  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
-    action: replace
-    target_label: __scheme__
-    regex: (https?)
-  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
-    action: replace
-    target_label: __metrics_path__
-    regex: (.+)
-  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
-    action: replace
-    target_label: __address__
-    regex: ([^:]+)(?::\d+)?;(\d+)
-    replacement: $1:$2
-  - source_labels: [__meta_kubernetes_service_name]
-    regex: prometheus-server
-    action: drop
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-k8s
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes/metrics
+  - services
+  - endpoints
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+```
+
+### 11.2 确保ingress存在metrics接口
+
+确保安装的ingress-nginx暴露了metrics接口，在安装ingress时，需要修改helm chart的value.yaml将metrics配置为enable: true即可，查看`ingress-nginx`命名空间下的service，确保`ingress-nginx-controller-metrics`存在
+
+```bash
+|11:00:11|root@k8s-master01:[~/moniting_ingress]> kubectl -n ingress-nginx get service
+NAME                                 TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             LoadBalancer   10.102.44.237   <pending>     80:30066/TCP,443:31902/TCP   12m
+ingress-nginx-controller-admission   ClusterIP      10.104.219.71   <none>        443/TCP                      12m
+ingress-nginx-controller-metrics     ClusterIP      10.98.227.90    <none>        10254/TCP                    12m
+```
+
+### 11.3添加ingress的ServiceMonitor
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ingress-nginx-monitor
+  namespace: monitoring
+  labels:
+    app: ingress-nginx-monitor
+spec:
+  jobLabel: app.kubernetes.io
+  endpoints:
+    - interval: 30s
+      port: metrics  # 这个port对应 Service.spec.ports.name
+      scheme: http
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: controller # 跟service的lables保持一致
+      app.kubernetes.io/instance: ingress-nginx  
+  namespaceSelector:
+    matchNames:
+    - ingress-nginx    # 跟svc所在namespace保持一致
+```
+
+### 11.4 Prometheus查看target
+
+![image.png](https://i.loli.net/2021/08/04/9wNxOUJtSjDzvbV.png)
+
+### 11.5 导入grafana dashboard
+
+导入官方代码仓库中的dashboard：https://github.com/kubernetes/ingress-nginx/tree/main/deploy/grafana/dashboard
+
+![image.png](https://i.loli.net/2021/08/04/6WbjXdGMNgVvZhc.png)
+
+![image.png](https://i.loli.net/2021/08/04/56vpNfPEV3BFR9s.png)
