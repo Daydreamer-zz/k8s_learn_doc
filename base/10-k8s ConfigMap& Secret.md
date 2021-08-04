@@ -211,7 +211,7 @@ Secret 是一种包含少量敏感信息例如密码、令牌或密钥的对象�
 ### 2.3.1 创建Secret
 
 ```bash
-kubectl create secret docker-registry my-docker-secret  --docker-server=registry.cn-qingdao.aliyuncs.com --docker-username=shz1997@hotmail.com --docker-password=SUNhong1997ZE --docker-email=shz1997@hotmail.com
+kubectl create secret docker-registry my-docker-secret  --docker-server=registry.cn-qingdao.aliyuncs.com --docker-username=shz1997@hotmail.com --docker-password=xxxxxxxxx --docker-email=shz1997@hotmail.com
 ```
 
 ### 2.3.2 资源文件中引用

@@ -685,7 +685,7 @@ spec:
       app.kubernetes.io/instance: ingress-nginx  
   namespaceSelector:
     matchNames:
-    - ingress-nginx    # 跟svc所在namespace保持一致
+    - ingress-nginx    # 跟service所在namespace保持一致
 ```
 
 ### 11.4 Prometheus查看target
