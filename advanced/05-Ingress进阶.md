@@ -578,7 +578,7 @@ data:
 安装htpasswd工具
 
 ```bash
-apt-get install apache2-utils
+apt-get install apache2-utils -y
 ```
 
 生成密码文件
@@ -620,5 +620,40 @@ spec:
             pathType: Prefix
 ```
 
+## 11.kube-prometheus监控Ingress
 
+通过additional configuration的方式配置ingress pod的自动发现，具体配置参考文档：https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/additional-scrape-config.md
 
+官方监控配置：https://github.com/kubernetes/ingress-nginx/tree/main/deploy/prometheus
+
+自动发现的additional configuration：
+```yaml
+global:
+  scrape_interval: 10s
+scrape_configs:
+- job_name: 'ingress-nginx-endpoints'
+  kubernetes_sd_configs:
+  - role: pod
+    namespaces:
+      names:
+      - ingress-nginx
+  relabel_configs:
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+    action: keep
+    regex: true
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scheme]
+    action: replace
+    target_label: __scheme__
+    regex: (https?)
+  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+    action: replace
+    target_label: __metrics_path__
+    regex: (.+)
+  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+    action: replace
+    target_label: __address__
+    regex: ([^:]+)(?::\d+)?;(\d+)
+    replacement: $1:$2
+  - source_labels: [__meta_kubernetes_service_name]
+    regex: prometheus-server
+    action: drop

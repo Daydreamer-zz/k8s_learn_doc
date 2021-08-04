@@ -35,8 +35,9 @@ vim values.yaml
 - Controller和admissionWebhook的镜像地址，需要将公网镜像同步至公司内网镜像仓库
 - hostNetwork设置为true
 - dnsPolicy设置为 ClusterFirstWithHostNet
-- NodeSelector添加ingress: "true"部署至指定节点
+- nodeSelector添加ingress: "true"部署至指定节点
 - 类型更改为kind: DaemonSet
+- metrics，enabled设为true
 
 ### 1.2.5 给需要部署Ingress的节点打标签
 
