@@ -1145,5 +1145,57 @@ ceph pg scrub 1.0
 ceph pg deep-scrub 1.0
 ```
 
+## 10.Ceph集群运维
+
+### 10.1 操作集群服务
+
+主要通过systemd管理ceph集群服务
+
+- 启动所有守护进程
+
+  ```bash
+  systemctl start ceph.target
+  ```
+
+- 要停止 Ceph 节点上的所有守护进程（不考虑类型），请执行以下命令
+
+  ```bash
+  systemctl stop ceph\*.service ceph\*.target
+  ```
+
+- 要在 Ceph 节点上启动特定类型的所有守护进程，请执行以下操作之一
+
+  ```bash
+  systemctl start ceph-osd.target
+  systemctl start ceph-mon.target
+  systemctl start ceph-mds.target
+  ```
+
+- 要停止 Ceph 节点上特定类型的所有守护进程，请执行以下操作之一
+
+  ```bash
+  systemctl stop ceph-mon\*.service ceph-mon.target
+  systemctl stop ceph-osd\*.service ceph-osd.target
+  systemctl stop ceph-mds\*.service ceph-mds.target
+  ```
+
+- 要在 Ceph 节点上启动特定的守护程序实例，请执行以下操作之一
+
+  ```bash
+  systemctl start ceph-osd@{id}
+  systemctl start ceph-mon@{hostname}
+  systemctl start ceph-mds@{hostname}
+  ```
+
+  例如：
+
+  ```bash
+  systemctl start ceph-osd@1
+  systemctl start ceph-mon@ceph-server
+  systemctl start ceph-mds@ceph-server
+  ```
+
+  
+
 
 
