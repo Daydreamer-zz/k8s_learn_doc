@@ -561,7 +561,7 @@ ceph-deploy rgw create ceph-node01
 在当前部署目录，修改配置文件`ceph.conf`，最底下添加
 
 ```conf
-[client.rgw.ceph-node01]   #注意后面主机名需要和部署的RGW的主机名对应
+[client.rgw.ceph-node01]
 rgw_frontends = "civetweb port=80"
 ```
 
@@ -906,6 +906,20 @@ name: cephfs-demo, metadata pool: cephfs_metadata, data pools: [cephfs_data ]
 cephfs-demo:1 {0=ceph-node01=up:active} 2 up:standby
 ```
 
+### 8.4 CephFS内核挂载
+
+创建挂载测试目录
+
+```bash
+mkdir -p /mnt/cephfs_demo
+```
+
+挂载CephFS
+
+```bash
+mount -t ceph 192.168.2.7:6789:/ /mnt/cephfs_demo/ -o name=admin
+```
+
 查看挂载情况
 
 ```bash
@@ -920,20 +934,6 @@ tmpfs              tmpfs     2.0G     0  2.0G   0% /sys/fs/cgroup
 tmpfs              tmpfs     2.0G   24K  2.0G   1% /var/lib/ceph/osd/ceph-0
 tmpfs              tmpfs     393M     0  393M   0% /run/user/0
 192.168.2.7:6789:/ ceph       45G     0   45G   0% /mnt/cephfs_demo
-```
-
-### 8.4 CephFS内核挂载
-
-创建挂载测试目录
-
-```bash
-mkdir -p /mnt/cephfs_demo
-```
-
-挂载CephFS
-
-```bash
-mount -t ceph 192.168.2.7:6789:/ /mnt/cephfs_demo/ -o name=admin
 ```
 
 ### 8.5 Ceph-fuse用户态挂载
