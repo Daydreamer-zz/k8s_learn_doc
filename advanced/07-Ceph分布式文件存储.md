@@ -1197,4 +1197,167 @@ ceph pg deep-scrub 1.0
   systemctl start ceph-mds@ceph-server
   ```
 
-  
+
+### 10.2 Ceph日志分析
+
+ceph的日志位置在`/var/log/ceph`
+
+### 10.3 Ceph集群监控
+
+#### 集群状态
+
+通过实时交互终端查看集群状况
+
+```bash
+[root@ceph-node01 ~]# ceph
+ceph> status
+  cluster:
+    id:     9f1caa0b-78df-4788-b279-ca45e12686d9
+    health: HEALTH_OK
+ 
+  services:
+    mon: 3 daemons, quorum ceph-node01,ceph-node02,ceph-node03 (age 18m)
+    mgr: ceph-node02(active, since 18m), standbys: ceph-node03, ceph-node01
+    mds: cephfs-demo:1 {0=ceph-node03=up:active} 2 up:standby
+    osd: 6 osds: 6 up (since 18m), 6 in (since 2h)
+    rgw: 1 daemon active (ceph-node01)
+ 
+  task status:
+ 
+  data:
+    pools:   8 pools, 256 pgs
+    objects: 535 objects, 1.2 GiB
+    usage:   9.5 GiB used, 291 GiB / 300 GiB avail
+    pgs:     256 active+clean
+```
+
+通过参数的方式查看集群状况
+
+```bash
+ceph status #或者ceph -s
+```
+
+动态查看集群状态，集群的信息状态会实时刷新
+
+```
+ceph -w
+```
+
+查看集群当前占用
+
+```bash
+ceph df #或者用rados df
+```
+
+集群仲裁情况
+
+```bash
+ceph quorum_status 
+```
+
+#### osd监控
+
+```bash
+[root@ceph-node01 ~]# ceph osd status 
++----+-------------+-------+-------+--------+---------+--------+---------+-----------+
+| id |     host    |  used | avail | wr ops | wr data | rd ops | rd data |   state   |
++----+-------------+-------+-------+--------+---------+--------+---------+-----------+
+| 0  | ceph-node01 | 1552M | 48.4G |    0   |     0   |    0   |     0   | exists,up |
+| 1  | ceph-node02 | 1699M | 48.3G |    0   |     0   |    0   |     0   | exists,up |
+| 2  | ceph-node03 | 1531M | 48.5G |    0   |     0   |    0   |     0   | exists,up |
+| 3  | ceph-node01 | 1675M | 48.3G |    0   |     0   |    0   |     0   | exists,up |
+| 4  | ceph-node02 | 1527M | 48.5G |    0   |     0   |    0   |     0   | exists,up |
+| 5  | ceph-node03 | 1695M | 48.3G |    0   |     0   |    0   |     0   | exists,up |
++----+-------------+-------+-------+--------+---------+--------+---------+-----------+
+```
+
+```bash
+[root@ceph-node01 ~]# ceph osd stat #或者用 ceph osd dump
+6 osds: 6 up (since 25m), 6 in (since 2h); epoch: e81
+```
+
+```bash
+[root@ceph-node01 ~]# ceph osd df
+ID CLASS WEIGHT  REWEIGHT SIZE    RAW USE DATA    OMAP    META     AVAIL   %USE VAR  PGS STATUS 
+ 0   hdd 0.04880  1.00000  50 GiB 1.5 GiB 528 MiB  20 KiB 1024 MiB  48 GiB 3.03 0.96 113     up 
+ 3   hdd 0.04880  1.00000  50 GiB 1.6 GiB 651 MiB  27 KiB 1024 MiB  48 GiB 3.27 1.04 143     up 
+ 1   hdd 0.04880  1.00000  50 GiB 1.7 GiB 676 MiB  20 KiB 1024 MiB  48 GiB 3.32 1.05 121     up 
+ 4   hdd 0.04880  1.00000  50 GiB 1.5 GiB 504 MiB  23 KiB 1024 MiB  49 GiB 2.98 0.95 135     up 
+ 2   hdd 0.04880  1.00000  50 GiB 1.5 GiB 508 MiB  23 KiB 1024 MiB  49 GiB 2.99 0.95 123     up 
+ 5   hdd 0.04880  1.00000  50 GiB 1.7 GiB 672 MiB  20 KiB 1024 MiB  48 GiB 3.31 1.05 133     up 
+                    TOTAL 300 GiB 9.5 GiB 3.5 GiB 136 KiB  6.0 GiB 291 GiB 3.15                 
+MIN/MAX VAR: 0.95/1.05  STDDEV: 0.15
+```
+
+#### mon监控
+
+```bash
+[root@ceph-node01 ~]# ceph mon stat 
+e3: 3 mons at {ceph-node01=[v2:192.168.2.7:3300/0,v1:192.168.2.7:6789/0],ceph-node02=[v2:192.168.2.8:3300/0,v1:192.168.2.8:6789/0],ceph-node03=[v2:192.168.2.9:3300/0,v1:192.168.2.9:6789/0]}, election epoch 20, leader 0 ceph-node01, quorum 0,1,2 ceph-node01,ceph-node02,ceph-node03
+```
+
+#### mds监控
+
+```bash
+[root@ceph-node01 ~]# ceph mds stat
+cephfs-demo:1 {0=ceph-node03=up:active} 2 up:standby
+```
+
+或者
+
+```bash
+ceph fs dump
+```
+
+#### ceph admin socket应用
+
+直接通过和ceph服务进程的socket文件通信，进行操作
+
+例如：查看mon的config
+
+```bash
+ceph --admin-daemon  /var/run/ceph/ceph-mon.ceph-node01.asok config show
+```
+
+### 10.4 pools(资源池)管理
+
+#### 列出集群的pool列表
+
+```bash
+ceph osd lspools
+```
+
+#### 查看某个pool的配置信息
+
+例如查看某个pool的pg_num
+
+```bash
+ceph osd pool get cephfs_data pg_num
+```
+
+#### pool关联特定应用
+
+针对不同应用的pool进行分类，如：rbd类型的pool配置成rbd类型，cephfs类型配置为cephfs，rgw类型配置为rgw
+
+创建实例pool
+
+```bash
+ceph osd pool create pool_demo 32 32
+```
+
+关联为rbd类型
+
+```bash
+ceph osd pool application enable pool_demo rbd
+```
+
+#### pool设定配额
+
+配置pool可以使用多少objects
+
+```bash
+ceph osd pool set-quota pool_demo max_objects 10000
+```
+
+### 10.5 Ceph PG数据分布
+
