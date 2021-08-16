@@ -15,9 +15,6 @@ kubectl create deployment nginx --image=nginx:1.15.2
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "1"
-  generation: 1
   labels: # 已经创建的deployment资源不允许修改lables
     app: nginx
 spec:
@@ -33,7 +30,6 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: nginx
     spec:
@@ -41,13 +37,9 @@ spec:
       - image: nginx:1.15.2
         imagePullPolicy: IfNotPresent
         name: nginx
-        resources: {}
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
-      securityContext: {}
       terminationGracePeriodSeconds: 30
 ```
 
