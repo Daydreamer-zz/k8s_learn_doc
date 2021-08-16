@@ -2,7 +2,7 @@
 
 ## 1.1 Service概念
 
-Service可以简单的理解为逻辑上的一组pod。一种可以访问pd的策略，而且其他pod可以通过这个service访问到这个service代理的pod。相对于pod而言，他会有一个固定的名称，一旦创建就会固定不变。
+Service可以简单的理解为逻辑上的一组pod。一种可以访问pod的策略，而且其他pod可以通过这个service访问到这个service代理的pod。相对于pod而言，他会有一个固定的名称，一旦创建就会固定不变。
 
 统一namespace下直接访问service名称即可访问，不同namespace下，访问格式为`sevicename.namespace`
 
