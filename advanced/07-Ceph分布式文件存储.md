@@ -1001,3 +1001,149 @@ ceph-deploy osd create ceph-node03 --data /dev/sdc
 
 ![image.png](https://i.loli.net/2021/08/16/xZlto4VyPMgjHbE.png)
 
+### 9.3 临时暂停rebalance
+
+暂停数据rebalance，如果此时业务流量较大，可以先将数据rebalance临时关闭，保障业务流量正常
+
+```bash
+ceph osd set norebalance
+```
+
+```bash
+ceph osd set nobackfill
+```
+
+恢复数据rebalance
+
+```bash
+ceph osd unset nobackfill
+```
+
+```bash
+ceph osd unset norebalance
+```
+
+### 9.4 OSD坏盘更换(删除OSD)
+
+查看osd延迟，可以通过osd延迟判定对应的盘是否出现故障
+
+```
+ceph osd perf
+```
+
+模拟osd故障
+
+```bash
+systemctl stop ceph-osd@5.service
+```
+
+查看集群状态
+
+```bash
+[root@ceph-node01 ~]# ceph -s
+  cluster:
+    id:     9f1caa0b-78df-4788-b279-ca45e12686d9
+    health: HEALTH_WARN
+            1 osds down
+            Degraded data redundancy: 128/834 objects degraded (15.348%), 55 pgs degraded, 133 pgs undersized
+ 
+  services:
+    mon: 3 daemons, quorum ceph-node01,ceph-node02,ceph-node03 (age 35m)
+    mgr: ceph-node01(active, since 36m), standbys: ceph-node02, ceph-node03
+    mds: cephfs-demo:1 {0=ceph-node02=up:active} 2 up:standby
+    osd: 6 osds: 5 up (since 75s), 6 in (since 35m)
+    rgw: 1 daemon active (ceph-node01)
+ 
+  task status:
+ 
+  data:
+    pools:   8 pools, 256 pgs
+    objects: 278 objects, 158 MiB
+    usage:   6.4 GiB used, 294 GiB / 300 GiB avail
+    pgs:     128/834 objects degraded (15.348%)
+             123 active+clean
+             78  active+undersized
+             55  active+undersized+degraded
+```
+
+查看osd列表，看到osd.5是down的状态
+
+```bash
+[root@ceph-node01 ~]# ceph osd tree
+ID CLASS WEIGHT  TYPE NAME            STATUS REWEIGHT PRI-AFF 
+-1       0.29279 root default                                 
+-3       0.09760     host ceph-node01                         
+ 0   hdd 0.04880         osd.0            up  1.00000 1.00000 
+ 3   hdd 0.04880         osd.3            up  1.00000 1.00000 
+-5       0.09760     host ceph-node02                         
+ 1   hdd 0.04880         osd.1            up  1.00000 1.00000 
+ 4   hdd 0.04880         osd.4            up  1.00000 1.00000 
+-7       0.09760     host ceph-node03                         
+ 2   hdd 0.04880         osd.2            up  1.00000 1.00000 
+ 5   hdd 0.04880         osd.5          down  1.00000 1.00000
+```
+
+将故障的osd进行out操作，out操作后等待数据重新rebalance完成后再进行以后操作
+
+```bash
+ceph osd out osd.5
+```
+
+删除对应的crush map
+
+```bash
+ceph osd crush rm osd.5
+```
+
+删除osd
+
+```bash
+ceph osd rm osd.5
+```
+
+删除osd认证key
+
+```bash
+ceph auth rm osd.5
+```
+
+再次查看osd列表，发现osd.5已经不在osd列表中了
+
+```bash
+[root@ceph-node01 ~]# ceph osd tree
+ID CLASS WEIGHT  TYPE NAME            STATUS REWEIGHT PRI-AFF 
+-1       0.24399 root default                                 
+-3       0.09760     host ceph-node01                         
+ 0   hdd 0.04880         osd.0            up  1.00000 1.00000 
+ 3   hdd 0.04880         osd.3            up  1.00000 1.00000 
+-5       0.09760     host ceph-node02                         
+ 1   hdd 0.04880         osd.1            up  1.00000 1.00000 
+ 4   hdd 0.04880         osd.4            up  1.00000 1.00000 
+-7       0.04880     host ceph-node03                         
+ 2   hdd 0.04880         osd.2            up  1.00000 1.00000
+```
+
+### 9.5 数据一致性检查
+
+数据一致性检查集群会在固定时间自动进行，如果要手动执行可以按如下操作。
+
+列出pg
+
+```bash
+ceph pg ls
+```
+
+数据轻量级一致性检查
+
+```bash
+ceph pg scrub 1.0
+```
+
+深度数据一致性检查
+
+```bash
+ceph pg deep-scrub 1.0
+```
+
+
+
