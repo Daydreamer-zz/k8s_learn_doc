@@ -1728,5 +1728,14 @@ ceph osd crush rule create-replicated ssd-demo ssd host hdd
 
 ### 12.1 RBD回收站机制
 
+创建演示rbd
+
+```bash
+ceph osd pool create demo-pool 32 32
+ceph osd pool application enable demo-pool rbd
+rbd create demo-pool/demo-rbd.img --size 10G
+for i in deep-flatten fast-diff object-map exclusive-lock;do rbd feature disable demo-pool/demo-rbd.img $i  ;done
+```
+
 
 
