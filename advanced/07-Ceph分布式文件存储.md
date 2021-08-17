@@ -1418,7 +1418,13 @@ ceph osd delete {pool-name} {pool-name} --yes-i-really-really-mean-it
 
 crushmap能够决定你的数据如何在ceph集群分配，通过crushmap规则可以实现数据的容灾。
 
-桶是层次结构中内部节点的 CRUSH 术语：主机、机架、行等。 CRUSH 映射定义了一系列用于描述这些节点的*类型*。默认类型包括：
+
+
+桶是层次结构中内部节点的 CRUSH 术语：主机、机架、行等。 CRUSH 映射定义了一系列用于描述这些节点的*类型*。
+
+![image.png](https://i.loli.net/2021/08/17/XGMgncFWY4pA8Um.png)
+
+默认类型包括：
 
 - `osd`（或`device`）
 - `host`
@@ -1452,4 +1458,273 @@ ceph osd pool get {pool-name} crush_rule
 本次实例集群架构为左边，通过调整实现右边架构（模拟每个机器两种不同磁盘，HDD和SSD）
 
 ![image.png](https://i.loli.net/2021/08/17/7o3kKqjS8hw9cWy.png)
+
+### 11.4 手动编辑CrushMap
+
+导出二进制格式crushmap
+
+```bash
+ceph osd getcrushmap -o crushmap.bin
+```
+
+反编译
+
+```bash
+crushtool -d crushmap.bin -o crushmap.txt
+```
+
+```
+# begin crush map
+tunable choose_local_tries 0
+tunable choose_local_fallback_tries 0
+tunable choose_total_tries 50
+tunable chooseleaf_descend_once 1
+tunable chooseleaf_vary_r 1
+tunable chooseleaf_stable 1
+tunable straw_calc_version 1
+tunable allowed_bucket_algs 54
+
+# devices
+device 0 osd.0 class hdd
+device 1 osd.1 class hdd
+device 2 osd.2 class hdd
+device 3 osd.3 class ssd
+device 4 osd.4 class ssd
+device 5 osd.5 class ssd
+
+# types
+type 0 osd
+type 1 host
+type 2 chassis
+type 3 rack
+type 4 row
+type 5 pdu
+type 6 pod
+type 7 room
+type 8 datacenter
+type 9 zone
+type 10 region
+type 11 root
+
+# buckets
+host ceph-node01 {
+	id -3		# do not change unnecessarily
+	id -4 class hdd		# do not change unnecessarily
+	# weight 0.098
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.0 weight 0.049
+}
+host ceph-node02 {
+	id -5		# do not change unnecessarily
+	id -6 class hdd		# do not change unnecessarily
+	# weight 0.098
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.1 weight 0.049
+}
+host ceph-node03 {
+	id -7		# do not change unnecessarily
+	id -8 class hdd		# do not change unnecessarily
+	# weight 0.098
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.2 weight 0.049
+}
+host ceph-node01-ssd {
+	# weight 0.098
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.3 weight 0.049
+}
+host ceph-node02-ssd {
+	# weight 0.098
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.4 weight 0.049
+}
+host ceph-node03-ssd {
+	# weight 0.098
+	alg straw2
+	hash 0	# rjenkins1
+	item osd.5 weight 0.049
+}
+root default {
+	id -1		# do not change unnecessarily
+	id -2 class hdd		# do not change unnecessarily
+	# weight 0.293
+	alg straw2
+	hash 0	# rjenkins1
+	item ceph-node01 weight 0.049
+	item ceph-node02 weight 0.049
+	item ceph-node03 weight 0.049
+}
+root ssd {
+	# weight 0.293
+	alg straw2
+	hash 0	# rjenkins1
+	item ceph-node01-ssd weight 0.049
+	item ceph-node02-ssd weight 0.049
+	item ceph-node03-ssd weight 0.049
+}
+
+# rules
+rule replicated_rule {
+	id 0
+	type replicated
+	min_size 1
+	max_size 10
+	step take default
+	step chooseleaf firstn 0 type host
+	step emit
+}
+
+rule demo_rule {
+    id 1
+	type replicated
+	min_size 1
+	max_size 10
+	step take ssd
+	step chooseleaf firstn 0 type host
+	step emit
+}
+# end crush map
+```
+
+重新编译为二进制文件
+
+```bash
+crushtool -c crushmap.txt -o crushmap-new.bin
+```
+
+应用新规则
+
+```bash
+ceph osd setcrushmap -i crushmap-new.bin
+```
+
+查看新规则
+
+```bash
+[root@ceph-node01 ~]# ceph osd tree
+ID  CLASS WEIGHT  TYPE NAME                STATUS REWEIGHT PRI-AFF 
+-12       0.14699 root ssd                                         
+ -9       0.04900     host ceph-node01-ssd                         
+  3   ssd 0.04900         osd.3                up  1.00000 1.00000 
+-10       0.04900     host ceph-node02-ssd                         
+  4   ssd 0.04900         osd.4                up  1.00000 1.00000 
+-11       0.04900     host ceph-node03-ssd                         
+  5   ssd 0.04900         osd.5                up  1.00000 1.00000 
+ -1       0.14699 root default                                     
+ -3       0.04900     host ceph-node01                             
+  0   hdd 0.04900         osd.0                up  1.00000 1.00000 
+ -5       0.04900     host ceph-node02                             
+  1   hdd 0.04900         osd.1                up  1.00000 1.00000 
+ -7       0.04900     host ceph-node03                             
+  2   hdd 0.04900         osd.2                up  1.00000 1.00000
+```
+
+获取演示资源池crush规则
+
+```bash
+[root@ceph-node01 ~]# ceph osd pool get demo-pool crush_rule
+crush_rule: replicated_rule
+```
+
+修改为刚刚创建的名为`demo_rule`的crushrule
+
+```bash
+[root@ceph-node01 ~]# ceph osd pool set demo-pool crush_rule demo_rule
+set pool 12 crush_rule to demo_rule
+```
+
+创建rbd并查看osd分布
+
+```bash
+[root@ceph-node01 ~]# rbd -p demo-pool create test-crush.img --size 10G
+[root@ceph-node01 ~]# rbd -p demo-pool ls
+test-crush.img
+[root@ceph-node01 ~]# ceph osd map demo-pool test-crush.img
+osdmap e189 pool 'demo-pool' (12) object 'test-crush.img' -> pg 12.2e7135e6 (12.6) -> up ([4,3,5], p4) acting ([4,3,5], p4)
+```
+
+### 11.5 命令行调整CrushMap
+
+添加bucket，注意这里的bucket和对象存储的bucket不是一个概念
+
+```bash
+ceph osd crush add-bucket ssd root
+```
+
+```bash
+ceph osd crush add-bucket ceph-node01-ssd host
+ceph osd crush add-bucket ceph-node02-ssd host
+ceph osd crush add-bucket ceph-node03-ssd host
+```
+
+移动目标osd至新建的bucket
+
+```bash
+ceph osd crush move osd.3 host=ceph-node01-ssd root=ssd
+ceph osd crush move osd.4 host=ceph-node02-ssd root=ssd
+ceph osd crush move osd.5 host=ceph-node03-ssd root=ssd
+```
+
+查看当前osd crushmap
+
+```bash
+[root@ceph-node01 ~]# ceph osd tree
+ID  CLASS WEIGHT  TYPE NAME            STATUS REWEIGHT PRI-AFF 
+-12       0.04880 host ceph-node03-ssd                         
+  5   hdd 0.04880     osd.5                up  1.00000 1.00000 
+-11       0.04880 host ceph-node02-ssd                         
+  4   hdd 0.04880     osd.4                up  1.00000 1.00000 
+-10       0.04880 host ceph-node01-ssd                         
+  3   hdd 0.04880     osd.3                up  1.00000 1.00000 
+ -9             0 root ssd                                     
+ -1       0.14639 root default                                 
+ -3       0.04880     host ceph-node01                         
+  0   hdd 0.04880         osd.0            up  1.00000 1.00000 
+ -5       0.04880     host ceph-node02                         
+  1   hdd 0.04880         osd.1            up  1.00000 1.00000 
+ -7       0.04880     host ceph-node03                         
+  2   hdd 0.04880         osd.2            up  1.00000 1.00000
+```
+
+创建rule
+
+```bassh
+ceph osd crush rule create-replicated ssd-demo ssd host hdd
+```
+
+### 11.6 编辑CrushMap注意事项
+
+- 在进行任何操作crushmap之前，提前导出crushmap二进制文件备份
+
+- 自定义crush location需要配置`osd crush update on start = false`
+
+  如果没有配置这个参数，重启osd后，该节点的osd会回到原来的默认位置，在配置了这个参数之后，扩容osd需要手动将新的osd move到指定的bucket下
+
+  进入部署目录修改ceph.conf，加入
+
+  ```
+  [osd]
+  osd crush update on start = false
+  ```
+
+  推送至其他节点
+
+  ```
+  ceph-deploy --overwrite-conf  config push ceph-node01 ceph-node02 ceph-node03
+  ```
+
+  重启所有节点osd
+
+  ```bash
+  systemctl restart ceph-osd.target
+  ```
+
+## 12.RBD的高级功能
+
+
 
