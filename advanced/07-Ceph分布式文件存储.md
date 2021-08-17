@@ -1726,5 +1726,7 @@ ceph osd crush rule create-replicated ssd-demo ssd host hdd
 
 ## 12.RBD的高级功能
 
+### 12.1 RBD回收站机制
+
 
 
