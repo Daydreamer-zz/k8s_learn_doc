@@ -1945,9 +1945,36 @@ total 20
 drwx------ 2 root root 16384 Aug 17 20:16 lost+found
 ```
 
+### 12.7 RBD的增量备份和恢复
 
+使用增量备份可以使生成的rbd镜像备份更小，但前提是必须是有一个rbd镜像快照全备状态一直的rbd镜像，才可以应用增量备份。
 
+进入挂载目录，生成测试增量数据
 
+```bash
+cd /mnt/ceph_rbd && echo "azhe azhe" > 2.txt
+```
 
+重新拍摄rbd快照
 
+```bash
+rbd snap create demo-pool/demo-rbd.img@snap-demo-diff
+```
 
+导出增量快照
+
+```bash
+rbd export-diff demo-pool/demo-rbd.img@snap-demo-diff /root/snap-demo-diff.img
+```
+
+恢复原来的全量rbd快照备份至新的rbd镜像
+
+```bash
+rbd import snap-demo.img demo-pool/demo-rbd-new.img
+```
+
+恢复增量rbd快照备份至新的rbd镜像
+
+```bash
+rbd import-diff snap-demo-diff.img demo-pool/demo-rbd-new.img
+```
