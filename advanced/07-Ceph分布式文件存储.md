@@ -1735,5 +1735,93 @@ rbd create demo-pool/demo-rbd.img --size 10G
 for i in deep-flatten fast-diff object-map exclusive-lock;do rbd feature disable demo-pool/demo-rbd.img $i  ;done
 ```
 
+移动rbd到回收站
 
+```bash
+rbd trash move demo-pool/demo-rbd.img --expires-at 20210820 #需要指定过期日期
+```
+
+查看rbd回收站
+
+```bash
+[root@ceph-node01 ~]# rbd trash  -p demo-pool ls
+ae4e93029347 demo-rbd.img
+```
+
+从回收站恢复
+
+```bash
+rbd trash restore -p  demo-pool ae4e93029347
+```
+
+### 12.2 RBD镜像制作快照
+
+创建指定类型的rbd image
+
+```bash
+rbd create demo-pool/demo-rbd.img --image-feature layering --size 10G
+```
+
+映射此镜像到块设备并挂载
+
+```bash
+rbd map demo-pool/demo-rbd.img #映射块设备
+mkfs.ext4 /dev/rbd0 #格式化
+mount /dev/rbd0 /mnt/ceph_rbd/ #挂载
+
+#写入测试数据
+cd /mnt/ceph_rbd/
+echo "hahahahaah" > 1.txt
+```
+
+创建快照
+
+```bash
+rbd snap create demo-pool/demo-rbd.img@snap_20210817 # @后跟快照的名称
+```
+
+查看快照列表
+
+```bash
+[root@ceph-node01 ~]# rbd snap ls demo-pool/demo-rbd.img
+SNAPID NAME          SIZE   PROTECTED TIMESTAMP                
+     4 snap_20210817 10 GiB           Tue Aug 17 19:58:42 2021
+```
+
+### 12.3 RBD数据快照恢复
+
+模拟误删除数据
+
+```bash
+[root@ceph-node01 ceph_rbd]# cd /mnt/ceph_rbd/ && rm -rf * && ll
+total 0
+```
+
+卸载块设备
+
+```bash
+umount /dev/rbd0
+```
+
+恢复快照
+
+```bash
+rbd snap rollback demo-pool/demo-rbd.img@snap_20210817
+```
+
+重新挂载rbd块设备
+
+```bash
+mount /dev/rbd0 /mnt/ceph_rbd/
+```
+
+查看目录文件
+
+```bash
+[root@ceph-node01 ~]# cd /mnt/ceph_rbd/ && ll && cat 1.txt
+total 20
+-rw-r--r-- 1 root root    11 Aug 17 20:16 1.txt
+drwx------ 2 root root 16384 Aug 17 20:16 lost+found
+hahahahaah
+```
 
