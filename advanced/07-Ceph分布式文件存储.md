@@ -448,7 +448,7 @@ xfs_growfs /dev/rbd0
     pgs:     64 active+clean
 ```
 
-查看健康状况详情，可以看到ceph-rbd-demo资源池未启用application，是因为在创建该资源池未进行init操作，安提示需要enable application操作
+查看健康状况详情，可以看到ceph-rbd-demo资源池未启用application，是因为在创建该资源池未进行init操作，按提示需要enable application操作
 
 ```bash
 [root@ceph-node01 ~]# ceph health detail 
@@ -1824,4 +1824,130 @@ total 20
 drwx------ 2 root root 16384 Aug 17 20:16 lost+found
 hahahahaah
 ```
+
+### 12.4 RBD镜像克隆机制
+
+参考公有云公共系统镜像，直接使用公共系统镜像可以快速创建实例。
+
+ceph通过copy-on-write(COW)功能实现了类似的功能，通过提前对rbd img拍摄的模板快照，可以直接从此快照快速克隆出一个rbd img。
+
+克隆分为两种，一种是完整克隆，但速度较慢；另一种是快速克隆，新镜像是类似链接到父镜像，读取从父镜像读取，写的话写入子镜像，既节省空间又加快了克隆速度，但是必须保证父镜像一直存在，所以必须对父镜像加入protect的标志位防止误删除。
+
+
+
+创建模板镜像
+
+```bash
+rbd snap create demo-pool/demo-rbd.img@template
+```
+
+保护此镜像
+
+```bash
+rbd snap protect demo-pool/demo-rbd.img@template
+```
+
+克隆镜像
+
+```bash
+rbd clone demo-pool/demo-rbd.img@template demo-pool/vm1-clone.img
+```
+
+查看克隆出的镜像信息
+
+```bash
+[root@ceph-node01 ~]# rbd info demo-pool/vm1-clone.img
+rbd image 'vm1-clone.img':
+	size 10 GiB in 2560 objects
+	order 22 (4 MiB objects)
+	snapshot_count: 0
+	id: d46d218cf54
+	block_name_prefix: rbd_data.d46d218cf54
+	format: 2
+	features: layering
+	op_features: 
+	flags: 
+	create_timestamp: Tue Aug 17 22:02:33 2021
+	access_timestamp: Tue Aug 17 22:02:33 2021
+	modify_timestamp: Tue Aug 17 22:02:33 2021
+	parent: demo-pool/demo-rbd.img@template
+	overlap: 10 GiB
+```
+
+### 12.5 RBD解除依赖关系
+
+由于以上克隆镜像的操作，父镜像如果损坏或丢失，所有的子镜像全部都会故障，所有可以通过接触依赖关系将父子镜像关系抽离出来。由于是一个独立的镜像，相应的占用空间也会增大，
+
+查看某个父镜像包含的子镜像
+
+```bash
+[root@ceph-node01 ~]# rbd children demo-pool/demo-rbd.img@template
+demo-pool/vm1-clone.img
+demo-pool/vm2-clone.img
+demo-pool/vm3-clone.img
+```
+
+解除某个镜像的父子关系(flatten)
+
+```bash
+rbd flatten demo-pool/vm1-clone.img
+```
+
+### 12.6 RBD的备份和恢复
+
+前面的快照是建立在ceph集群内部的，如果ceph集群不可用了，则快照也没有办法进行恢复，所以可使用RBD的备份功能，备份到集群外部。或者需要将某些数据迁移到另外一个ceph集群，也可以通过备份恢复来实现。
+
+创建rbd镜像快照
+
+```
+rbd snap create demo-pool/demo-rbd.img@snap-demo
+```
+
+导出rbd镜像快照
+
+```bash
+rbd export demo-pool/demo-rbd.img@snap-demo /root/snap-demo.img
+```
+
+演示误删除数据，该演示rbd块设备挂载在/mnt/ceph_rbd下
+
+```bash
+cd /mnt/ceph_rbd/ && rm -rf *
+```
+
+导入备份的rbd镜像快照，导入另一个新的rbd，不存在会自动创建
+
+```bash
+rbd import snap-demo.img demo-pool/demo-rbd-import.img
+```
+
+映射新的rbd并挂载到原来位置
+
+```bash
+#禁用不兼容的feature
+[root@ceph-node01 ~]# rbd feature disable demo-pool/demo-rbd-import.img object-map fast-diff deep-flatten
+
+#映射rbd为块设备
+[root@ceph-node01 ~]# rbd map demo-pool/demo-rbd-import.img
+/dev/rbd1
+
+#卸载原块设备
+[root@ceph-node01 ~]# umount /dev/rbd0
+
+#挂载恢复的新的rbd为块设备
+[root@ceph-node01 ~]# mount /dev/rbd1 /mnt/ceph_rbd/
+
+#进入目录查看数据
+[root@ceph-node01 ~]# cd /mnt/ceph_rbd/
+[root@ceph-node01 ceph_rbd]# ll
+total 20
+-rw-r--r-- 1 root root    11 Aug 17 20:16 1.txt
+drwx------ 2 root root 16384 Aug 17 20:16 lost+found
+```
+
+
+
+
+
+
 
