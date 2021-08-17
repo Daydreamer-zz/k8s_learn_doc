@@ -1361,3 +1361,95 @@ ceph osd pool set-quota pool_demo max_objects 10000
 
 ### 10.5 Ceph PG数据分布
 
+#### 什么是PG
+
+PG和pool(资源池)是互相关联的，最终存储的是object，PG又经过crush map的算法，最终落到不同的osd上。pg数量越多，经过crush map算法，他会映射到更多的osd上。
+
+#### PG的作用
+
+- 数据分布情况
+
+  PG数量越多，数据在osd上就越分散，丢数据概率越小，反之亦然。
+
+- 提高计算效率
+
+  由于object的数量非常大，直接由ceph运算负荷会非常大，所以有了PG后，PG中会有多个object，crush map算法计算时只计算PG落在哪个osd上即可。
+
+#### PG数量计算方法
+
+![image.png](https://i.loli.net/2021/08/17/RjXQSp8wyZ1eLPn.png)
+
+**注意**：最终pg_num的计算结果取接近计算值的2次幂，以提高CRUSH算法效率。例如：计算值为200时，取256作为结果。pgp_num的值应设置为与pg_num一致。
+
+参数解释：
+
+- **Target PGs per OSD**：预估每个OSD的PG数，一般取100计算。当预估以后集群OSD数不会增加时，取100计算；当预估以后集群OSD数会增加一倍时，取200计算。
+- **OSD #**：集群OSD数量。
+- **%Data**：预估该pool占该OSD集群总容量的近似百分比。
+- **Size**：该pool的副本数。
+
+经过计算后，可以适当调整资源池pg的数量，可以通过如下命令
+
+```bash
+ceph osd pool set {pool-name} pg_num {pg-num}
+```
+
+相对于的pgp数量也需要调整，一般和pg数量相同
+
+```bash
+ceph osd pool set {pool-name} pgp_num {pgp-num}
+```
+
+### 10.6 删除pool(资源池)
+
+删除资源池pool的命令格式有特殊要求，资源池名必须重复两次，最后加入`--yes-i-really-really-mean-it`
+
+```bash
+ceph osd delete {pool-name} {pool-name} --yes-i-really-really-mean-it
+```
+
+而且ceph.conf配置文件必须加入`mon_allow_pool_delete = true`，修改后重新推送至集群节点
+
+## 11.定制Crush Map规则
+
+### 11.1 CrushMap功能简介
+
+所述CRUSH算法确定如何存储和通过计算存储位置检索数据。CRUSH 使 Ceph 客户端能够直接与 OSD 通信，而不是通过中央服务器或代理。通过算法确定的数据存储和检索方法，Ceph 避免了单点故障、性能瓶颈和可扩展性的物理限制。
+
+crushmap能够决定你的数据如何在ceph集群分配，通过crushmap规则可以实现数据的容灾。
+
+桶是层次结构中内部节点的 CRUSH 术语：主机、机架、行等。 CRUSH 映射定义了一系列用于描述这些节点的*类型*。默认类型包括：
+
+- `osd`（或`device`）
+- `host`
+- `chassis`
+- `rack`
+- `row`
+- `pdu`
+- `pod`
+- `room`
+- `datacenter`
+- `zone`
+- `region`
+- `root`
+
+### 11.2 CrushMap规则剖析
+
+查看集群CrushMap规则
+
+```bash
+ceph osd crush tree # 或者ceph osd crush dump
+```
+
+查看某个pool的crush_rule
+
+```
+ceph osd pool get {pool-name} crush_rule
+```
+
+### 11.3 定制Crush拓扑架构
+
+本次实例集群架构为左边，通过调整实现右边架构（模拟每个机器两种不同磁盘，HDD和SSD）
+
+![image.png](https://i.loli.net/2021/08/17/7o3kKqjS8hw9cWy.png)
+
