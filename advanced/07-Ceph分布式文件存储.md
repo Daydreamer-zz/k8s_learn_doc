@@ -1978,3 +1978,131 @@ rbd import snap-demo.img demo-pool/demo-rbd-new.img
 ```bash
 rbd import-diff snap-demo-diff.img demo-pool/demo-rbd-new.img
 ```
+
+### 12.8 RGW高可用集群搭建
+
+增加rgw节点，进入部署目录操作
+
+```bash
+ceph-deploy rgw create ceph-node02
+```
+
+修改rgw为默认端口，需要删除ceph.conf文件中自定义rgw端口的配置，然后从新推送配置文件
+
+```bash
+ceph-deploy --overwrite-conf  config push ceph-node02 ceph-node01
+```
+
+ceph-node01和ceph-node02安装haproxy、keepalived
+
+```
+yum install -y keepalived haproxy
+```
+
+修改haproxy配置文件，ceph-node01和ceph-node02配置文件相同
+
+```
+#全局配置不用修改
+frontend  http_web *:80
+    mode http
+    default_backend  rgw
+backend rgw
+    balance     roundrobin
+    mode http
+    server ceph-node01 192.168.2.7:7480 
+    server ceph-node02 192.168.2.8:7480
+```
+
+修改keepalived的配置文件
+
+ceph-node01
+
+```
+! Configuration File for keepalived
+
+global_defs {
+   router_id LVS_DEVEL
+}
+
+vrrp_script chk_haproxy {
+    script "killall -0 haproxy"
+    interval 2
+    weight -2
+}
+
+vrrp_instance RGW {
+    state MASTER
+    interface eth0
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.2.11/24 dev eth0
+    }
+    track_script {
+        chk_haproxy
+    }
+}
+```
+
+ceph-node02
+
+```
+! Configuration File for keepalived
+
+global_defs {
+   router_id LVS_DEVEL
+}
+
+vrrp_script chk_haproxy {
+    script "killall -0 haproxy"
+    interval 2
+    weight -2
+}
+
+vrrp_instance RGW {
+    state BACKUP  #角色是BACKUP
+    interface eth0
+    virtual_router_id 51  #和MASTER的id一致
+    priority 99 #优先级比MASTER低，但不能低太多，低太多故障转移会出问题
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.2.11/24 dev eth0
+    }
+    track_script {
+        chk_haproxy
+    }
+}
+```
+
+分别启动两个节点的haproxy和keepalived
+
+```bash
+systemctl enabled keepalived.service haproxy.service --now
+```
+
+修改客户端指向
+
+s3cmd
+
+```bash
+'''''
+host_base = 192.168.2.11:80
+host_bucket = 192.168.2.11:80/%(bucket)s
+'''''
+```
+
+swift
+
+```bash
+export ST_AUTH=http://192.168.2.11/auth
+```
+
