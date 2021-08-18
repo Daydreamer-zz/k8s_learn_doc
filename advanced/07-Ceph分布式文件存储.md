@@ -2137,16 +2137,16 @@ rbd create -p kubernetes --image-feature layering rbd.img --size 50G
 创建k8s连接ceph集群的认证用户
 
 ```bash
-[root@ceph-node01 ~]# ceph auth get-or-create client.kubernetes mon 'profile rbd' osd 'profile rbd pool=kubernetes'
+[root@ceph-node01 ~]# ceph auth get-or-create client.kubernetes mon 'profile rbd' osd 'profile rbd pool=kubernetes' mgr 'profile rbd pool=kubernetes'
 [client.kubernetes]
-	key = AQAHGx1h5xLfAhAAKPYFpoesF5RXRiSodwE3ng==
+	key = AQAsJh1hykyAEhAAuyctXoUSL+1VL3izREDqCg==
 ```
 
 将key的值base64
 
 ```bash
-[root@ceph-node01 ~]# echo AQAHGx1h5xLfAhAAKPYFpoesF5RXRiSodwE3ng==|base64 
-QVFBSEd4MWg1eExmQWhBQUtQWUZwb2VzRjVSWFJpU29kd0Uzbmc9PQo=
+[root@ceph-node01 ~]# echo AQAsJh1hykyAEhAAuyctXoUSL+1VL3izREDqCg==|base64 
+QVFBc0poMWh5a3lBRWhBQXV5Y3RYb1VTTCsxVkwzaXpSRURxQ2c9PQo=
 ```
 
 在k8s中创建secret
@@ -2158,7 +2158,7 @@ metadata:
   name: ceph-secret
 type: "kubernetes.io/rbd"
 data:
-  key: QVFBSEd4MWg1eExmQWhBQUtQWUZwb2VzRjVSWFJpU29kd0Uzbmc9PQo=
+  key: QVFBc0poMWh5a3lBRWhBQXV5Y3RYb1VTTCsxVkwzaXpSRURxQ2c9PQo=
 ```
 
 创建测试pod
@@ -2308,5 +2308,150 @@ tmpfs           2.0G     0  2.0G   0% /proc/scsi
 tmpfs           2.0G     0  2.0G   0% /sys/firmware
 ```
 
+### 13.3 Ceph与k8s StorageClass集成
 
+k8s创建Ceph类型的StorageClass，通过csi驱动，自动完成pv的创建和ceph rbd镜像的创建，实现过程的自动化，需要K8s集群安装ceph-csi驱动。
+
+#### 生成ceph-csi ConfigMap
+
+通过`ceph mon dump`获取集群fsid和mon节点地址和端口，然后修改示例configmap资源文件*csi-config-map.yaml*
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ceph-csi-config
+data:
+  config.json: |-
+    [
+      {
+        "clusterID": "9f1caa0b-78df-4788-b279-ca45e12686d9",
+        "monitors": [
+          "192.168.2.7:6789",
+          "192.168.2.8:6789",
+          "192.168.2.9:6789"
+        ]
+      }
+    ]
+```
+
+生成后，将新的ConfigMap对象存储在 Kubernetes 中
+
+```bash
+kubectl apply -f csi-config-map.yaml
+```
+
+ceph-csi 的最新版本还需要一个额外的ConfigMap对象来定义密钥管理服务 (KMS) 提供程序的详细信息，配置示例ConfigMap文件*csi-kms-config-map.yaml*
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ceph-csi-encryption-kms-config
+data:
+  config.json: |-
+    {}
+```
+
+生成后，将新的ConfigMap对象存储在 Kubernetes 中
+
+```bash
+kubectl apply -f csi-kms-config-map.yaml
+```
+
+#### 生成ceph-csi cephx Secret
+
+ceph-csi需要 cephx 凭据才能与 Ceph 集群通信。使用新创建的 Kubernetes 用户 ID 和 cephx 密钥生成一个类似于以下示例的csi-rbd-secret.yaml文件
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: csi-rbd-secret
+  namespace: default
+stringData:
+  userID: kubernetes
+  userKey: AQAsJh1hykyAEhAAuyctXoUSL+1VL3izREDqCg==
+```
+
+生成后，将新的Secret对象存储在 Kubernetes 中
+
+```bash
+kubectl apply -f csi-rbd-secret.yaml
+```
+
+#### 配置ceph-csi驱动插件
+
+创建所需的ServiceAccount和 RBAC ClusterRole / ClusterRoleBinding Kubernetes 对象
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-provisioner-rbac.yaml
+kubectl apply -f https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-nodeplugin-rbac.yaml
+```
+
+最后，创建ceph-csi配置器和节点插件，由于大部分镜像在国外，需要同步镜像至国内或者内网后修改资源文件镜像地址，这里不再叙述。
+
+```bash
+wget https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-rbdplugin-provisioner.yaml
+wget https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-rbdplugin.yaml
+kubectl apply -f csi-rbdplugin-provisioner.yaml -f csi-rbdplugin.yaml
+```
+
+#### 创建*StorageClass*
+
+Kubernetes StorageClass定义了一类存储。 可以创建多个StorageClass对象以映射到不同的服务质量级别（即 NVMe 与基于 HDD 的池）和功能。
+
+例如，要创建一个映射到 上面创建的kubernetes池的ceph -csi StorageClass，在确保“clusterID”属性与您的 Ceph 集群的fsid匹配后，可以使用以下 YAML 文件：
+
+csi-rbd-sc.yaml
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+   name: csi-rbd-sc
+provisioner: rbd.csi.ceph.com
+parameters:
+   clusterID: 9f1caa0b-78df-4788-b279-ca45e12686d9 #修改为ceph集群的fsid
+   pool: kubernetes
+   imageFeatures: layering
+   csi.storage.k8s.io/provisioner-secret-name: csi-rbd-secret
+   csi.storage.k8s.io/provisioner-secret-namespace: default
+   csi.storage.k8s.io/controller-expand-secret-name: csi-rbd-secret
+   csi.storage.k8s.io/controller-expand-secret-namespace: default
+   csi.storage.k8s.io/node-stage-secret-name: csi-rbd-secret
+   csi.storage.k8s.io/node-stage-secret-namespace: default
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+mountOptions:
+   - discard
+```
+
+创建StorageClass资源
+
+```bash
+kubectl apply -f csi-rbd-sc.yaml
+```
+
+查看StorageClass资源
+
+```bash
+[root@k8s-master01 ceph-storageclass]# kubectl get storageclasses.storage.k8s.io
+NAME         PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+csi-rbd-sc   rbd.csi.ceph.com   Delete          Immediate           true                   2m22s
+```
+
+将该设置为默认StorageClass
+
+```bash
+kubectl patch storageclass csi-rbd-sc -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
+
+再次查看StorageClass资源
+
+```bash
+[root@k8s-master01 ceph-storageclass]# kubectl get storageclasses.storage.k8s.io 
+NAME                   PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+csi-rbd-sc (default)   rbd.csi.ceph.com   Delete          Immediate           true                   6m49s
+```
 
