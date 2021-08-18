@@ -2106,3 +2106,111 @@ swift
 export ST_AUTH=http://192.168.2.11/auth
 ```
 
+## 13.Ceph与Kubernetes集成
+
+**注意**：kubernetes集群和ceph集群集成，k8s所有的node节点必须安装ceph-common，配置ceph yum源直接安装即可
+
+```bash
+yum install -y ceph-common
+```
+
+### 13.1 Ceph与volumes集成
+
+创建pool
+
+```bash
+ceph osd pool create kubernetes 8 8
+```
+
+创建rbd镜像
+
+```bash
+rbd create -p kubernetes --image-feature layering rbd.img --size 10G
+```
+
+创建k8s连接ceph集群的认证用户
+
+```bash
+ceph auth get-or-create client.kubernetes mon 'profile rbd' osd 'profile rbd pool=kubernetes'
+```
+
+```bash
+[root@ceph-node01 ~]# ceph auth list |grep "client.kubernetes" -A 3
+installed auth entries:
+
+client.kubernetes
+	key: AQDlEh1hAJQgIBAA0uB4n7XIH+UDr34xzE+HGg==
+	caps: [mon] profile rbd
+	caps: [osd] profile rbd pool=kubernetes
+```
+
+将key的值base64
+
+```bash
+[root@ceph-node01 ~]# echo AQDlEh1hAJQgIBAA0uB4n7XIH+UDr34xzE+HGg==|base64 
+QVFEbEVoMWhBSlFnSUJBQTB1QjRuN1hJSCtVRHIzNHh6RStIR2c9PQo=
+```
+
+在k8s中创建secret
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ceph-secret
+type: "kubernetes.io/rbd"
+data:
+  key: QVFEbEVoMWhBSlFnSUJBQTB1QjRuN1hJSCtVRHIzNHh6RStIR2c9PQo=
+```
+
+创建测试pod
+
+```bash
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ceph-pod
+spec:
+  containers:
+    - name: pod-with-rbd
+      imagePullPolicy: IfNotPresent
+      image: nginx:1.18.0
+      ports:
+        - containerPort: 80
+          name: www
+          protocol: TCP
+      volumeMounts:
+        - mountPath: /data
+          name: ceph-rbd
+  volumes:
+    - name: ceph-rbd
+      rbd:
+        pool: kubernetes #连接到ceph集群的资源池
+        image: rbd.img   #ceph集群的rbd镜像名称
+        fsType: ext4     #指定rbd文件系统
+        user: kubernetes #访问ceph集群的用户
+        secretRef:
+          name: ceph-secret #访问ceph集群的认证秘钥
+        monitors:          #ceph集群的mon地址
+          - 192.168.2.7:6789
+          - 192.168.2.8:6789
+          - 192.168.2.9:6789
+```
+
+查看容器挂载情况
+
+```bash
+[root@k8s-master01 ~]# kubectl exec -it ceph-pod -- df -hT
+Filesystem     Type     Size  Used Avail Use% Mounted on
+overlay        overlay   50G  4.2G   46G   9% /
+tmpfs          tmpfs     64M     0   64M   0% /dev
+tmpfs          tmpfs    2.0G     0  2.0G   0% /sys/fs/cgroup
+/dev/rbd0      ext4     9.8G   37M  9.7G   1% /data
+/dev/sda2      xfs       50G  4.2G   46G   9% /etc/hosts
+shm            tmpfs     64M     0   64M   0% /dev/shm
+tmpfs          tmpfs    2.0G   12K  2.0G   1% /run/secrets/kubernetes.io/serviceaccount
+tmpfs          tmpfs    2.0G     0  2.0G   0% /proc/acpi
+tmpfs          tmpfs    2.0G     0  2.0G   0% /proc/scsi
+tmpfs          tmpfs    2.0G     0  2.0G   0% /sys/firmware
+```
+
