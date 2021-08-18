@@ -2119,36 +2119,34 @@ yum install -y ceph-common
 创建pool
 
 ```bash
-ceph osd pool create kubernetes 8 8
+ceph osd pool create kubernetes 64 64
+```
+
+标记资源池类型
+
+```bash
+ceph osd pool application enable kubernetes rbd
 ```
 
 创建rbd镜像
 
 ```bash
-rbd create -p kubernetes --image-feature layering rbd.img --size 10G
+rbd create -p kubernetes --image-feature layering rbd.img --size 50G
 ```
 
 创建k8s连接ceph集群的认证用户
 
 ```bash
-ceph auth get-or-create client.kubernetes mon 'profile rbd' osd 'profile rbd pool=kubernetes'
-```
-
-```bash
-[root@ceph-node01 ~]# ceph auth list |grep "client.kubernetes" -A 3
-installed auth entries:
-
-client.kubernetes
-	key: AQDlEh1hAJQgIBAA0uB4n7XIH+UDr34xzE+HGg==
-	caps: [mon] profile rbd
-	caps: [osd] profile rbd pool=kubernetes
+[root@ceph-node01 ~]# ceph auth get-or-create client.kubernetes mon 'profile rbd' osd 'profile rbd pool=kubernetes'
+[client.kubernetes]
+	key = AQAHGx1h5xLfAhAAKPYFpoesF5RXRiSodwE3ng==
 ```
 
 将key的值base64
 
 ```bash
-[root@ceph-node01 ~]# echo AQDlEh1hAJQgIBAA0uB4n7XIH+UDr34xzE+HGg==|base64 
-QVFEbEVoMWhBSlFnSUJBQTB1QjRuN1hJSCtVRHIzNHh6RStIR2c9PQo=
+[root@ceph-node01 ~]# echo AQAHGx1h5xLfAhAAKPYFpoesF5RXRiSodwE3ng==|base64 
+QVFBSEd4MWg1eExmQWhBQUtQWUZwb2VzRjVSWFJpU29kd0Uzbmc9PQo=
 ```
 
 在k8s中创建secret
@@ -2160,7 +2158,7 @@ metadata:
   name: ceph-secret
 type: "kubernetes.io/rbd"
 data:
-  key: QVFEbEVoMWhBSlFnSUJBQTB1QjRuN1hJSCtVRHIzNHh6RStIR2c9PQo=
+  key: QVFBSEd4MWg1eExmQWhBQUtQWUZwb2VzRjVSWFJpU29kd0Uzbmc9PQo=
 ```
 
 创建测试pod
@@ -2205,7 +2203,7 @@ Filesystem     Type     Size  Used Avail Use% Mounted on
 overlay        overlay   50G  4.2G   46G   9% /
 tmpfs          tmpfs     64M     0   64M   0% /dev
 tmpfs          tmpfs    2.0G     0  2.0G   0% /sys/fs/cgroup
-/dev/rbd0      ext4     9.8G   37M  9.7G   1% /data
+/dev/rbd0      ext4      50G   53M   50G   1% /data
 /dev/sda2      xfs       50G  4.2G   46G   9% /etc/hosts
 shm            tmpfs     64M     0   64M   0% /dev/shm
 tmpfs          tmpfs    2.0G   12K  2.0G   1% /run/secrets/kubernetes.io/serviceaccount
@@ -2213,4 +2211,102 @@ tmpfs          tmpfs    2.0G     0  2.0G   0% /proc/acpi
 tmpfs          tmpfs    2.0G     0  2.0G   0% /proc/scsi
 tmpfs          tmpfs    2.0G     0  2.0G   0% /sys/firmware
 ```
+
+### 13.2 Ceph与k8s pv集成
+
+准备工作，需要提前在ceph集群创建：用户、资源池、rbd镜像等资源供k8s调用，参考上一步
+
+创建rbd镜像
+
+```bash
+rbd create -p kubernetes --image-feature layering k8s-demo-pv.img --size 10G
+```
+
+创建pv
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: rbd-demo
+spec:
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ceph-rbd
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 10G
+  rbd:
+    pool: kubernetes
+    image: k8s-demo-pv.img
+    user: kubernetes
+    fsType: ext4
+    secretRef:
+      name: ceph-secret
+    monitors:
+      - 192.168.2.7:6789
+      - 192.168.2.8:6789
+      - 192.168.2.9:6789
+```
+
+创建pvc
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ceph-demo-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeName: rbd-demo
+  resources:
+    requests:
+      storage: 10G
+  storageClassName: ceph-rbd
+```
+
+pod中使用pvc
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pod
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.18.0
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 80
+          name: www
+          protocol: TCP
+      volumeMounts:
+        - mountPath: /data
+          name: rbd-volume
+  volumes:
+    - name: rbd-volume
+      persistentVolumeClaim:
+        claimName: ceph-demo-pvc
+```
+
+查看pod挂载情况
+
+```bash
+[root@k8s-master01 ceph]# kubectl exec -it demo-pod -- df -h
+Filesystem      Size  Used Avail Use% Mounted on
+overlay          50G  3.9G   46G   8% /
+tmpfs            64M     0   64M   0% /dev
+tmpfs           2.0G     0  2.0G   0% /sys/fs/cgroup
+/dev/rbd0       9.8G   37M  9.7G   1% /data
+/dev/sda2        50G  3.9G   46G   8% /etc/hosts
+shm              64M     0   64M   0% /dev/shm
+tmpfs           2.0G   12K  2.0G   1% /run/secrets/kubernetes.io/serviceaccount
+tmpfs           2.0G     0  2.0G   0% /proc/acpi
+tmpfs           2.0G     0  2.0G   0% /proc/scsi
+tmpfs           2.0G     0  2.0G   0% /sys/firmware
+```
+
+
 
