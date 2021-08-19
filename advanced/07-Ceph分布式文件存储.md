@@ -2454,4 +2454,3 @@ kubectl patch storageclass csi-rbd-sc -p '{"metadata": {"annotations":{"storagec
 NAME                   PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
 csi-rbd-sc (default)   rbd.csi.ceph.com   Delete          Immediate           true                   6m49s
 ```
-
