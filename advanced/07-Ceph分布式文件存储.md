@@ -2324,6 +2324,12 @@ storageclass的关键组成：
 
 ![image.png](https://i.loli.net/2021/08/19/TdLoP34tGKUwcRA.png)
 
+#### 创建命名空间
+
+```bash
+kubectl create namespace ceph
+```
+
 #### 生成ceph-csi ConfigMap
 
 通过`ceph mon dump`获取集群fsid和mon节点地址和端口，然后修改示例configmap资源文件*csi-config-map.yaml*
@@ -2350,7 +2356,7 @@ data:
 生成后，将新的ConfigMap对象存储在 Kubernetes 中
 
 ```bash
-kubectl apply -f csi-config-map.yaml
+kubectl -n ceph apply -f csi-config-map.yaml
 ```
 
 ceph-csi 的最新版本还需要一个额外的ConfigMap对象来定义密钥管理服务 (KMS) 提供程序的详细信息，配置示例ConfigMap文件*csi-kms-config-map.yaml*
@@ -2368,19 +2374,19 @@ data:
 生成后，将新的ConfigMap对象存储在 Kubernetes 中
 
 ```bash
-kubectl apply -f csi-kms-config-map.yaml
+kubectl -n ceph apply -f csi-kms-config-map.yaml
 ```
 
 #### 生成ceph-csi cephx Secret
 
-ceph-csi需要 cephx 凭据才能与 Ceph 集群通信。使用新创建的 Kubernetes 用户 ID 和 cephx 密钥生成一个类似于以下示例的csi-rbd-secret.yaml文件
+ceph-csi需要 cephx 凭据才能与 Ceph 集群通信。使用13.1生成的key即可，*csi-rbd-secret.yaml*
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
   name: csi-rbd-secret
-  namespace: default
+  namespace: ceph
 stringData:
   userID: kubernetes
   userKey: AQAsJh1hykyAEhAAuyctXoUSL+1VL3izREDqCg==
@@ -2389,24 +2395,51 @@ stringData:
 生成后，将新的Secret对象存储在 Kubernetes 中
 
 ```bash
-kubectl apply -f csi-rbd-secret.yaml
+kubectl -n ceph apply -f csi-rbd-secret.yaml
 ```
 
 #### 配置ceph-csi驱动插件
 
-创建所需的ServiceAccount和 RBAC ClusterRole / ClusterRoleBinding Kubernetes 对象
+下载所需的ServiceAccount和 RBAC ClusterRole / ClusterRoleBinding Kubernetes 对象资源文件
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-provisioner-rbac.yaml
-kubectl apply -f https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-nodeplugin-rbac.yaml
+wget https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-provisioner-rbac.yaml
+wget https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-nodeplugin-rbac.yaml
+```
+
+修改命名空间
+
+```bash
+sed -i "s#namespace: default#namespace: ceph#g" csi-provisioner-rbac.yaml
+sed -i "s#namespace: default#namespace: ceph#g" csi-nodeplugin-rbac.yaml
+```
+
+创建资源
+
+```bash
+kubectl -n ceph create -f csi-provisioner-rbac.yaml -f csi-nodeplugin-rbac.yaml
 ```
 
 最后，创建ceph-csi配置器和节点插件，由于大部分镜像在国外，需要同步镜像至国内或者内网后修改资源文件镜像地址，这里不再叙述。
 
+下载资源文件
+
 ```bash
 wget https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-rbdplugin-provisioner.yaml
 wget https://raw.githubusercontent.com/ceph/ceph-csi/master/deploy/rbd/kubernetes/csi-rbdplugin.yaml
-kubectl apply -f csi-rbdplugin-provisioner.yaml -f csi-rbdplugin.yaml
+```
+
+修改命名空间
+
+```bash
+sed -i "s#namespace: default#namespace: ceph#g" csi-rbdplugin-provisioner.yaml
+sed -i "s#namespace: default#namespace: ceph#g" csi-rbdplugin.yaml
+```
+
+创建资源
+
+```bash
+kubectl -n ceph apply -f csi-rbdplugin-provisioner.yaml -f csi-rbdplugin.yaml
 ```
 
 #### 创建*StorageClass*
@@ -2428,11 +2461,11 @@ parameters:
    pool: kubernetes
    imageFeatures: layering
    csi.storage.k8s.io/provisioner-secret-name: csi-rbd-secret
-   csi.storage.k8s.io/provisioner-secret-namespace: default
+   csi.storage.k8s.io/provisioner-secret-namespace: ceph
    csi.storage.k8s.io/controller-expand-secret-name: csi-rbd-secret
-   csi.storage.k8s.io/controller-expand-secret-namespace: default
+   csi.storage.k8s.io/controller-expand-secret-namespace: ceph
    csi.storage.k8s.io/node-stage-secret-name: csi-rbd-secret
-   csi.storage.k8s.io/node-stage-secret-namespace: default
+   csi.storage.k8s.io/node-stage-secret-namespace: ceph
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 mountOptions:
