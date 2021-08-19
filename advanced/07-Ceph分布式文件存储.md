@@ -2145,7 +2145,7 @@ rbd create -p kubernetes --image-feature layering rbd.img --size 50G
 将key的值base64
 
 ```bash
-[root@ceph-node01 ~]# echo AQAsJh1hykyAEhAAuyctXoUSL+1VL3izREDqCg==|base64 
+[root@ceph-node01 ~]# ceph auth get-key client.kubernetes|base64  
 QVFBc0poMWh5a3lBRWhBQXV5Y3RYb1VTTCsxVkwzaXpSRURxQ2c9PQo=
 ```
 
@@ -2310,7 +2310,19 @@ tmpfs           2.0G     0  2.0G   0% /sys/firmware
 
 ### 13.3 Ceph与k8s StorageClass集成
 
-k8s创建Ceph类型的StorageClass，通过csi驱动，自动完成pv的创建和ceph rbd镜像的创建，实现过程的自动化，需要K8s集群安装ceph-csi驱动。
+storageclass一般由管理员创建，它作为存储资源的抽象定义，对用户设置的PVC申请屏蔽后端存储的细节操作，一方面减少了用户对于存储资源细节的关注，另一方面减轻了管理员手工管理PV的工作，由系统根据spec自动完成PV的创建和绑定，实现了动态的资源供应。并且，storageclass是不受namespace限制的。
+storageclass的关键组成：
+
+- provisioner
+  每个storageclass都有一个provisioner，用来决定使用哪个卷插件创建PV，该字段必须指定。不同的存储有对应的provisioner，但是k8s内置了一些存储的provisioner，另外有一些存储没有内置到k8s中。没有内置的，可以使用外部第三方的provisioner，第三方的provisioner要符合k8s定义的规范https://github.com/kubernetes/community/blob/master/contributors/design- proposals/volume-provisioning.md
+- parameters
+  后端存储资源提供者的参数设置，不同的provisioner包括不同的参数设置。某些参数可以不显示设定，provisioner将使用其默认值。例如ceph存储的参数可以由ceph集群的monitor地址，存储池，默认文件系统等参数构成。
+- reclaimPolicy
+  由storageclass动态创建的pv会在类的reclaimPolicy字段中指定回收策略，可以是Delete或者 Retain。如果storageclass对象被创建时没有指定reclaimPolicy，它将默认为Delete。通过storageclass手动创建并管理的pv会使用它们被创建时指定的回收政策。
+
+动态创建流程图（来源于kubernetes in action）
+
+![image.png](https://i.loli.net/2021/08/19/TdLoP34tGKUwcRA.png)
 
 #### 生成ceph-csi ConfigMap
 
