@@ -1648,7 +1648,7 @@ osdmap e189 pool 'demo-pool' (12) object 'test-crush.img' -> pg 12.2e7135e6 (12.
 
 ### 11.5 命令行调整CrushMap
 
-添加bucket，注意这里的bucket和对象存储的bucket不是一个概念
+添加bucket
 
 ```bash
 ceph osd crush add-bucket ssd root
