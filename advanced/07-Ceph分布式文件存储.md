@@ -2597,5 +2597,76 @@ SNAPID NAME                                          SIZE  PROTECTED TIMESTAMP
      9 csi-snap-598bb238-010e-11ec-9fc8-02540db9f4c6 1 GiB           Fri Aug 20 00:56:09 2021
 ```
 
+## 14.Ceph管理和监控
 
+### 14.1 Ceph mgr的特性和功能
+
+仪表板提供以下功能：
+
+- **多用户和角色管理**：仪表板支持具有不同权限（角色）的多个用户帐户。用户帐户和角色可以通过命令行和 WebUI 进行管理。仪表板支持各种增强密码安全性的方法。可以配置密码复杂性规则，要求用户在第一次登录后或在可配置的时间段后更改密码。有关详细信息，请参阅 [用户和角色管理](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-user-role-management)。
+- **单点登录 (SSO)**：仪表板支持使用 SAML 2.0 协议通过外部身份提供商进行身份验证。有关详细信息，请参阅 [启用单点登录 (SSO)](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-sso-support)。
+- **SSL/TLS 支持**：Web 浏览器和仪表板之间的所有 HTTP 通信都通过 SSL 进行保护。可以使用内置命令创建自签名证书，但也可以导入由 CA 签名和颁发的自定义证书。有关详细信息，请参阅[SSL/TLS 支持](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-ssl-tls-support)。
+- **审计**：仪表板后端可以被配置为记录所有`PUT`，`POST` 并`DELETE`在Ceph的审计日志API请求。有关 如何启用此功能的说明，[请](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-auditing)参阅[审核 API 请求](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-auditing)。
+- **国际化 (I18N)**：可以在运行时选择用于仪表板文本的语言。
+
+Ceph 仪表板提供以下监控和管理功能：
+
+- **整体集群健康**：显示性能和容量指标以及集群状态。
+- **嵌入式 Grafana 仪表板**：Ceph 仪表板 [Grafana](https://grafana.com/)仪表板可以嵌入外部应用程序和网页中，以显示由[Prometheus 模块](https://docs.ceph.com/en/latest/mgr/prometheus/#mgr-prometheus)模块收集的信息和性能指标。有关如何配置此功能的详细信息，请参阅 [启用 Grafana 仪表板的嵌入](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-grafana)。
+- **集群日志**：显示集群事件和审计日志文件的最新更新。日志条目可以按优先级、日期或关键字进行过滤。
+- **主机**：显示所有集群主机的列表及其存储驱动器、正在运行的服务以及安装的 Ceph 版本。
+- **性能计数器**：显示每个正在运行的服务的特定于服务的详细统计信息。
+- **Monitors**：列出所有 Mons、它们的仲裁状态和打开的会话。
+- **监控**：启用 Prometheus 静默的创建、重新创建、编辑和到期，列出警报配置以及所有已配置和触发的警报。显示触发警报的通知。
+- **配置编辑器**：显示所有可用的配置选项、它们的描述、类型、默认值和当前设置的值。这些也可以编辑。
+- **池**：列出 Ceph 池及其详细信息（例如应用程序、pg-autoscaling、归置组、复制大小、EC 配置文件、CRUSH 规则、配额等）
+- **OSD**：列出 OSD、它们的状态和使用统计信息以及详细信息，如属性（OSD 映射）、元数据、性能计数器和读/写操作的使用直方图。标记 OSD 向上/向下/退出、清除和重新加权 OSD、执行清理操作、修改各种与清理相关的配置选项、选择配置文件以调整回填活动的级别。列出与 OSD 关联的所有驱动器。设置和更改 OSD 的设备类别，按设备类别显示和排序 OSD。在新驱动器和主机上部署 OSD。
+- **设备管理**：列出编排器已知的所有主机。列出连接到主机的所有驱动器及其属性。显示驱动器健康预测和 SMART 数据。闪烁外壳 LED。
+- **iSCSI**：列出所有运行 TCMU 运行器服务的主机，显示所有图像及其性能特征（读/写操作、流量）。创建、修改和删除 iSCSI 目标（通过`ceph-iscsi`）。显示 iSCSI 网关状态和有关活动启动器的信息。有关如何配置此功能的说明，请参阅[启用 iSCSI 管理](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-iscsi-management)。
+- **RBD**：列出所有 RBD 镜像及其属性（大小、对象、特征）。创建、复制、修改和删除 RBD 镜像（包括快照）并管理 RBD 命名空间。在全局、每个池或每个镜像级别定义各种 I/O 或带宽限制设置。创建、删除和回滚所选镜像的快照，保护/取消保护这些快照以防止修改。复制或克隆快照，平整克隆的镜像。
+- **RBD 镜像**：启用并配置到远程 Ceph 服务器的 RBD 镜像。列出活动守护进程及其状态、池和 RBD 映像，包括同步进度。
+- **CephFS**：列出活动的文件系统客户端和关联的池，包括使用统计信息。驱逐活跃的 CephFS 客户端。管理 CephFS 配额和快照。浏览 CephFS 目录结构。
+- **对象网关**：列出所有活动的对象网关及其性能计数器。显示和管理（添加/编辑/删除）对象网关用户及其详细信息（例如配额）以及用户的存储桶及其详细信息（例如放置目标、所有者、配额、版本控制、多因素身份验证）。有关配置说明，请参阅[启用对象网关管理前端](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-enabling-object-gateway)。
+- **NFS**：通过 NFS Ganesha 管理 CephFS 文件系统和 RGW S3 存储桶的 NFS 导出。有关如何启用此功能的详细信息，请参阅[NFS-Ganesha 管理](https://docs.ceph.com/en/latest/mgr/dashboard/#dashboard-nfs-ganesha-management)。
+- **Ceph 管理器模块**：启用和禁用 Ceph 管理器模块，管理特定于模块的配置设置。
+
+### 14.2 Ceph Dashboard安装部署
+
+安装ceph-mgr-dashboard，**所有的mgr节点都需要安装**
+
+```bash
+yum install -y ceph-mgr-dashboard
+```
+
+启动dashboard模块
+
+```bash
+ceph mgr module enable dashboard
+```
+
+自动生成ssl
+
+```bash
+ceph dashboard create-self-signed-cert
+```
+
+或者可以直接禁用ssl（可选）
+
+```bash
+ceph config set mgr mgr/dashboard/ssl false
+```
+
+配置主机名和端口，如果未配置，则默认监听所有，默认http端口都8080，https端口为8443
+
+```bash
+ceph config set mgr mgr/dashboard/server_addr 0.0.0.0
+ceph config set mgr mgr/dashboard/server_port 8080
+ceph config set mgr mgr/dashboard/ssl_server_port 8443
+```
+
+配置一个用户
+
+```bash
+ceph dashboard ac-user-create admin -i pass administrator #-i指定一个包含密码的文本文件
+```
 
