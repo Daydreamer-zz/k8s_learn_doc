@@ -2547,3 +2547,55 @@ tmpfs           985M     0  985M   0% /proc/scsi
 tmpfs           985M     0  985M   0% /sys/firmware
 ```
 
+#### 安装SnapshotClass
+
+k8s1.19版本以上需要单独安装volumesnapshots组件，安装资源在：https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/volumesnapshots
+
+安装ceph snapshotclass
+
+*snapshotclass.yaml*
+
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: csi-rbdplugin-snapclass
+driver: rbd.csi.ceph.com
+parameters:
+  clusterID: 9f1caa0b-78df-4788-b279-ca45e12686d9  #修改为ceph集群的fsid
+  csi.storage.k8s.io/snapshotter-secret-name: csi-rbd-secret
+  csi.storage.k8s.io/snapshotter-secret-namespace: ceph #修改csi-rbd-secret所在的namaspace
+deletionPolicy: Delete
+```
+
+测试volumesnapshot创建
+
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: rbd-pvc-snapshot
+spec:
+  volumeSnapshotClassName: csi-rbdplugin-snapclass #snapshotclass的名称
+  source:
+    persistentVolumeClaimName: rbd-pvc #需要做snapshot的pvc的名称
+```
+
+在k8s查看volumesnapshot
+
+```bash
+[root@k8s-master01 ~]# kubectl get volumesnapshot
+NAME               READYTOUSE   SOURCEPVC   SOURCESNAPSHOTCONTENT   RESTORESIZE   SNAPSHOTCLASS             SNAPSHOTCONTENT                                    CREATIONTIME   AGE
+rbd-pvc-snapshot   true         rbd-pvc                             1Gi           csi-rbdplugin-snapclass   snapcontent-792c06cc-7e86-4c2d-9fae-b3f84a6a6ac2   39s            39s
+```
+
+在ceph集群查看快照
+
+```bash
+[root@ceph-node01 ~]# rbd snap ls kubernetes/csi-snap-598bb238-010e-11ec-9fc8-02540db9f4c6
+SNAPID NAME                                          SIZE  PROTECTED TIMESTAMP                
+     9 csi-snap-598bb238-010e-11ec-9fc8-02540db9f4c6 1 GiB           Fri Aug 20 00:56:09 2021
+```
+
+
+
