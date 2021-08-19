@@ -2481,24 +2481,15 @@ kubectl apply -f csi-rbd-sc.yaml
 查看StorageClass资源
 
 ```bash
-[root@k8s-master01 ceph-storageclass]# kubectl get storageclasses.storage.k8s.io
-NAME         PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
-csi-rbd-sc   rbd.csi.ceph.com   Delete          Immediate           true                   2m22s
+kubectl get storageclasses.storage.k8s.io
 ```
 
-将该设置为默认StorageClass
+将该设置为默认StorageClass（可选）
 
 ```bash
 kubectl patch storageclass csi-rbd-sc -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 ```
 
-再次查看StorageClass资源
-
-```bash
-[root@k8s-master01 ceph-storageclass]# kubectl get storageclasses.storage.k8s.io 
-NAME                   PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
-csi-rbd-sc (default)   rbd.csi.ceph.com   Delete          Immediate           true                   6m49s
-```
 #### 测试StorageClass
 
 创建pvc，*sc-pvc.yaml*
@@ -2516,21 +2507,6 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: csi-rbd-sc
-```
-
-```bash
-kubectl create -f sc-pvc.yaml
-```
-
-查看pv和pvc
-
-```bash
-[root@k8s-master01 ceph]# kubectl get pvc
-NAME      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-rbd-pvc   Bound    pvc-ae847308-d8e9-478e-9f0a-3571f8831293   1Gi        RWO            csi-rbd-sc     39s
-[root@k8s-master01 ceph]# kubectl get pv
-NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   REASON   AGE
-pvc-ae847308-d8e9-478e-9f0a-3571f8831293   1Gi        RWO            Delete           Bound    default/rbd-pvc   csi-rbd-sc              41s
 ```
 
 pod中使用pvc，*sc-pod.yaml*
