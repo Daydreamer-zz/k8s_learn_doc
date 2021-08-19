@@ -2466,3 +2466,75 @@ kubectl patch storageclass csi-rbd-sc -p '{"metadata": {"annotations":{"storagec
 NAME                   PROVISIONER        RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
 csi-rbd-sc (default)   rbd.csi.ceph.com   Delete          Immediate           true                   6m49s
 ```
+#### 测试StorageClass
+
+创建pvc，*sc-pvc.yaml*
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rbd-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: csi-rbd-sc
+```
+
+```bash
+kubectl create -f sc-pvc.yaml
+```
+
+查看pv和pvc
+
+```bash
+[root@k8s-master01 ceph]# kubectl get pvc
+NAME      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+rbd-pvc   Bound    pvc-ae847308-d8e9-478e-9f0a-3571f8831293   1Gi        RWO            csi-rbd-sc     39s
+[root@k8s-master01 ceph]# kubectl get pv
+NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   REASON   AGE
+pvc-ae847308-d8e9-478e-9f0a-3571f8831293   1Gi        RWO            Delete           Bound    default/rbd-pvc   csi-rbd-sc              41s
+```
+
+pod中使用pvc，*sc-pod.yaml*
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: csi-rbd-demo-pod
+spec:
+  containers:
+    - name: web-server
+      image: nginx:1.18.0
+      volumeMounts:
+        - name: mypvc
+          mountPath: /var/lib/www/html
+  volumes:
+    - name: mypvc
+      persistentVolumeClaim:
+        claimName: rbd-pvc
+        readOnly: false
+```
+
+创建pod并查看pod挂载情况
+
+```bash
+[root@k8s-master01 ceph]# kubectl exec -it csi-rbd-demo-pod -- df -h
+Filesystem      Size  Used Avail Use% Mounted on
+overlay          50G  5.1G   45G  11% /
+tmpfs            64M     0   64M   0% /dev
+tmpfs           985M     0  985M   0% /sys/fs/cgroup
+/dev/sda2        50G  5.1G   45G  11% /etc/hosts
+shm              64M     0   64M   0% /dev/shm
+/dev/rbd0       976M  2.6M  958M   1% /var/lib/www/html
+tmpfs           985M   12K  985M   1% /run/secrets/kubernetes.io/serviceaccount
+tmpfs           985M     0  985M   0% /proc/acpi
+tmpfs           985M     0  985M   0% /proc/scsi
+tmpfs           985M     0  985M   0% /sys/firmware
+```
+
