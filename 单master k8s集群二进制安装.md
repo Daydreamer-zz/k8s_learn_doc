@@ -1117,5 +1117,52 @@ cd deployment/kubernetes
 ./deploy.sh -s -i 10.96.0.10 | kubectl apply -f -
 ```
 
+## 八、安装ingress-nginx
 
+### 1.添加ingress的helm仓库
+
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+```
+
+### 2.下载ingress的helm包至本地
+
+```bash
+helm pull ingress-nginx/ingress-nginx
+```
+
+### 3.解压并修改
+
+```
+tar xf ingress-nginx-4.0.1.tgz
+```
+
+```bash
+cd ingress-nginx
+
+sed -i "s#hostNetwork: false#hostNetwork: true#g" values.yaml
+sed -i "s#dnsPolicy: ClusterFirst#dnsPolicy: ClusterFirstWithHostNet#g" values.yaml
+sed -i "s#kind: Deployment#kind: DaemonSet#g" values.yaml
+```
+
+额外修改的
+
+- nodeSelector添加`ingress: "true"`部署至指定节点
+- metrics，enabled设为true
+
+### 4.给需要部署Ingress的节点打标签
+
+```bash
+kubectl create namespace ingress-nginx
+```
+
+```bash
+kubectl label nodes k8s-node01 k8s-node02  ingress=true
+```
+
+### 5.安装ingress
+
+```bash
+helm install ingress-nginx -n ingress-nginx .
+```
 
