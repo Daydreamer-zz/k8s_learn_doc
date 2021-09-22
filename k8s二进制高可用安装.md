@@ -722,6 +722,8 @@ EOF
 
 #### 1.2 生成etcd systemd启动脚本
 
+所有master节点配置一样
+
 ```bash
 cat <<EOF > /usr/lib/systemd/system/etcd.service
 [Unit]
@@ -742,10 +744,17 @@ Alias=etcd3.service
 EOF
 ```
 
-#### 1.3 启动etcd并配置为开启启动
+#### 1.3 所有master启动etcd并配置为开启启动
 
 ```bash
 systemctl daemon-reload && systemctl enable --now etcd
+```
+
+#### 1.4 检查etcd状态
+
+```bash
+export ETCDCTL_API=3
+etcdctl --endpoints="192.168.2.4:2379,192.168.2.5:2379,192.168.2.6:2379" --cacert=/etc/kubernetes/pki/etcd/etcd-ca.pem --cert=/etc/kubernetes/pki/etcd/etcd.pem --key=/etc/kubernetes/pki/etcd/etcd-key.pem  endpoint status --write-out=table
 ```
 
 ### 2.配置keepalived和haproxy
