@@ -159,6 +159,12 @@ ceph-deploy osd create ceph-node03 --data /dev/sdb
 
 ### 5.7 查看集群状态
 
+如有`mon is allowing insecure global_id reclaim`警告，可以通过禁用不安全模式解决
+
+```bash
+ceph config set mon auth_allow_insecure_global_id_reclaim false
+```
+
 ```bash
 [root@ceph-node01 ~]# ceph -s
   cluster:
