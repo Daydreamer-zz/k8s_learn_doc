@@ -309,12 +309,12 @@ cfssl gencert -initca etcd-ca-csr.json | cfssljson -bare /etc/etcd/ssl/etcd-ca
 
 ```bash
 cfssl gencert \
-   -ca=/etc/etcd/ssl/etcd-ca.pem \
-   -ca-key=/etc/etcd/ssl/etcd-ca-key.pem \
-   -config=ca-config.json \
-   -hostname=127.0.0.1,k8s-master01,192.168.2.4 \
-   -profile=kubernetes \
-   etcd-csr.json | cfssljson -bare /etc/etcd/ssl/etcd
+-ca=/etc/etcd/ssl/etcd-ca.pem \
+-ca-key=/etc/etcd/ssl/etcd-ca-key.pem \
+-config=ca-config.json \
+-hostname=127.0.0.1,k8s-master01,192.168.2.4 \
+-profile=kubernetes \
+etcd-csr.json | cfssljson -bare /etc/etcd/ssl/etcd
 ```
 
 #### 3.3 软链接
