@@ -404,6 +404,8 @@ openssl rsa -in /etc/kubernetes/pki/sa.key -pubout -out /etc/kubernetes/pki/sa.p
 
 ### 1.下载和安装k8s etcd helm二进制文件
 
+
+
 #### 1.1 下载并解压
 
 ```bash

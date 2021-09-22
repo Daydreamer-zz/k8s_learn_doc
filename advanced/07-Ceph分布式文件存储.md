@@ -96,6 +96,12 @@ gpgcheck=0
 yum install -y ceph-deploy
 ```
 
+如果ceph-deploy报错可通过pip3重新安装
+
+```bash
+pip3 install git+https://github.com/ceph/ceph-deploy.git
+```
+
 ### 5.4 所有节点安装ceph相关软件包
 
 ```bash
