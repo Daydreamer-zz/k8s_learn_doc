@@ -267,12 +267,6 @@ systemctl enable docker
 systemctl daemon-reload && systemctl restart docker
 ```
 
-### 5.克隆安装配置文件github项目
-
-```bash
-cd /root && git clone https://github.com/dotbalo/k8s-ha-install.git
-```
-
 ## 二、证书生成
 
 ### 1.下载证书生成工具
@@ -298,6 +292,12 @@ mkdir -p /etc/kubernetes/pki /etc/kubernetes/manifests/ /etc/systemd/system/kube
 ```
 
 ### 3.etcd
+
+进入证书申请配置文件目录操作
+
+```bash
+cd install_resource/k8s_pki_config
+```
 
 #### 3.1 etcd CA证书
 
