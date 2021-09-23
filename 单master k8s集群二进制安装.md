@@ -253,7 +253,6 @@ cat << EOF > /etc/docker/daemon.json
     "max-file": "2"
   },
   "live-restore": true,
-  "insecure-registries" : ["hb.node1.com"]
 }
 EOF
 ```
