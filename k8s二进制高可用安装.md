@@ -1420,9 +1420,6 @@ systemctl daemon-reload && systemctl enable --now kubelet
 #### 2.1 生成kube-proxy.kubeconfig配置文件(在master操作)
 
 ```bash
-cd /root/k8s-ha-install
-
-
 kubectl -n kube-system create serviceaccount kube-proxy
 
 kubectl create clusterrolebinding system:kube-proxy --clusterrole system:node-proxier --serviceaccount kube-system:kube-proxy
