@@ -99,8 +99,8 @@ yum install wget jq psmisc vim net-tools telnet yum-utils device-mapper-persiste
 
 ```bash
 sed -i 's#SELINUX=enforcing#SELINUX=disabled#g' /etc/selinux/config
-systemctl disable firewalld.service
-systemctl stop firewalld.service
+systemctl disable firewalld --now
+systemctl disable NetworkManager --now
 chmod +x /etc/rc.d/rc.local
 systemctl list-unit-files|egrep "^ab|^aud|^kdump|vm|^md|^mic|^post|lvm"  |awk '{print $1}'|sed -r 's#(.*)#systemctl disable &#g'|bash
 echo 'export HISTTIMEFORMAT="%Y-%m-%d %H:%M:%S  "' >> /etc/profile
