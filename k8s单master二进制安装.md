@@ -296,7 +296,7 @@ mkdir -p /etc/kubernetes/pki /etc/kubernetes/manifests/ /etc/systemd/system/kube
 进入证书申请配置文件目录操作
 
 ```bash
-cd install_resource/k8s_pki_config
+cd k8s_learn_doc/install_resource/k8s_pki_config
 ```
 
 #### 3.1 etcd CA证书
@@ -773,7 +773,7 @@ mkdir -p /root/.kube && cp /etc/kubernetes/admin.kubeconfig /root/.kube/config
 #### 5.3 生成kubernets bootstrap相关系统资源
 
 ```bash
-cd k8s-ha-install/bootstrap
+cd k8s_learn_doc/install_resource/bootstrap
 ```
 
 ```bash
@@ -1115,50 +1115,15 @@ cd deployment/kubernetes
 
 ## 八、安装ingress-nginx
 
-### 1.添加ingress的helm仓库
-
-```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-```
-
-### 2.下载ingress的helm包至本地
-
-```bash
-helm pull ingress-nginx/ingress-nginx
-```
-
-### 3.解压并修改
-
-```
-tar xf ingress-nginx-4.0.1.tgz
-```
-
-```bash
-cd ingress-nginx
-
-sed -i "s#hostNetwork: false#hostNetwork: true#g" values.yaml
-sed -i "s#dnsPolicy: ClusterFirst#dnsPolicy: ClusterFirstWithHostNet#g" values.yaml
-sed -i "s#kind: Deployment#kind: DaemonSet#g" values.yaml
-```
-
-额外修改的
-
-- nodeSelector添加`ingress: "true"`部署至指定节点
-- metrics，enabled设为true
-
-### 4.给需要部署Ingress的节点打标签
-
-```bash
-kubectl create namespace ingress-nginx
-```
+### 1.给需要部署Ingress的节点打标签
 
 ```bash
 kubectl label nodes k8s-node01 k8s-node02  ingress=true
 ```
 
-### 5.安装ingress
+### 2.安装ingress
 
 ```bash
-helm install ingress-nginx -n ingress-nginx .
+cd k8s_learn_doc/install_resource/ingress_nginx
+kubectl create -f deploy.yaml
 ```
-
