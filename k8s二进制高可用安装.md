@@ -1568,7 +1568,7 @@ POD_SUBNET="172.16.0.0/12"
 sed -i 's@# - name: CALICO_IPV4POOL_CIDR@- name: CALICO_IPV4POOL_CIDR@g; s@#   value: "192.168.0.0/16"@  value: '"${POD_SUBNET}"'@g' calico-etcd.yaml
 
 #关闭IPIP模式，如网络环境不是二层互联的可以不操作此步
-sed -i 's#value: "Always"#value: "Off"#g' calico-etcd.yaml
+sed -i 's#value: "Always"#value: "Never"#g' calico-etcd.yaml
 ```
 
 ### 3.安装calico
