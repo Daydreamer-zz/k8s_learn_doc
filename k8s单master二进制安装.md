@@ -688,7 +688,9 @@ ExecStart=/usr/local/bin/kube-controller-manager \\
       --allocate-node-cidrs=true \\
       --cluster-cidr=172.16.0.0/12 \\
       --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem \\
-      --node-cidr-mask-size=24
+      --node-cidr-mask-size=24 \\
+      --cluster-signing-duration=876000h0m0s
+      
       
 Restart=always
 RestartSec=10s
