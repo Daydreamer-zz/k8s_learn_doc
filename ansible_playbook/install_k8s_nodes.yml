@@ -1,0 +1,61 @@
+---
+- hosts: node
+  remote_user: root
+  tasks:
+    - name: 创建相关目录
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - /etc/kubernetes/pki
+        - /etc/kubernetes/manifests
+        - /etc/systemd/system/kubelet.service.d
+        - /var/lib/kubelet
+        - /var/log/kubernetes
+        - /opt/cni/bin
+
+    - name: 复制kubelet二进制文件
+      copy:
+        src: /usr/local/bin/kubelet
+        dest: /usr/local/bin/
+        mode: 0755
+
+
+    - name: 复制kubelet证书配置文件和启动配置文件
+      copy:
+        src: "{{ item.filename }}"
+        dest: "{{ item.path }}"
+      with_items:
+        - { filename: "/etc/kubernetes/bootstrap-kubelet.kubeconfig", path: "/etc/kubernetes/" }
+        - { filename: "/etc/kubernetes/pki/ca.pem", path: "/etc/kubernetes/pki/" }
+        - { filename: "/etc/kubernetes/pki/front-proxy-ca.pem", path: "/etc/kubernetes/pki/" }
+        - { filename: "/usr/lib/systemd/system/kubelet.service", path: "/usr/lib/systemd/system/" }
+        - { filename: "/etc/systemd/system/kubelet.service.d/10-kubelet.conf", path: "/etc/systemd/system/kubelet.service.d/" }
+        - { filename: "/etc/kubernetes/kubelet-conf.yml", path: "/etc/kubernetes/" }
+
+    - name: 启动kubelet服务
+      systemd:
+        name: kubelet
+        state: started
+        enabled: true
+
+    - name: 复制kube-proxy二进制文件
+      copy:
+        src: /usr/local/bin/kube-proxy
+        dest: /usr/local/bin/
+        mode: 0755
+
+    - name: 复制kube-proxy配置文件和启动脚本
+      copy:
+        src: "{{ item.filename }}"
+        dest: "{{ item.path }}"
+      with_items:
+        - { filename: "/etc/kubernetes/kube-proxy.kubeconfig", path: "/etc/kubernetes/" }
+        - { filename: "/etc/kubernetes/kube-proxy.conf", path: "/etc/kubernetes/" }
+        - { filename: "/usr/lib/systemd/system/kube-proxy.service", path: "/usr/lib/systemd/system/" }
+
+    - name: 启动kube-proxy服务
+      systemd:
+        name: kube-proxy
+        state: started
+        enabled: true
