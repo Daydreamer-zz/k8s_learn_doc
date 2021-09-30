@@ -1264,7 +1264,7 @@ kubectl create -f bootstrap.secret.yaml
 
 ## 五、配置node节点
 
-无特殊标注的，均在master节点操作
+无特殊标注的，均在master01节点操作
 
 ### 1.kubelet配置
 
