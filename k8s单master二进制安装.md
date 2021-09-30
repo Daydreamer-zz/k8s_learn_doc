@@ -784,37 +784,22 @@ kubectl create -f bootstrap.secret.yaml
 
 ## 五、配置node节点
 
-无特殊标注的，均在node节点操作
+无特殊标注的，均在master节点操作
 
 ### 1.kubelet配置
 
-#### 1.1 发送二进制文件(在master操作)
+#### 1.1 发送二进制文件
 
 ```bash
 WorkNodes='k8s-node01 k8s-node02'
-```
 
-```bash
-for NODE in $WorkNodes; do scp /usr/local/bin/kube{let,-proxy} $NODE:/usr/local/bin/; done
-```
-
-#### 1.2 发送证书和bootstrap-kubelet.kubeconfig(在master操作)
-
-```bash
-WorkNodes='k8s-node01 k8s-node02'
-```
-
-```bash
 cd /etc/kubernetes/
-
 for NODE in $WorkNodes; do
-     for FILE in pki/ca.pem pki/ca-key.pem pki/front-proxy-ca.pem bootstrap-kubelet.kubeconfig; do
-       scp /etc/kubernetes/$FILE $NODE:/etc/kubernetes/${FILE}
-     done
+     scp /usr/local/bin/kube{let,-proxy} $NODE:/usr/local/bin/
 done
 ```
 
-#### 1.3 生成kubelet systemd启动脚本
+#### 1.2 生成kubelet systemd启动脚本
 
 ```bash
 cat << EOF > /usr/lib/systemd/system/kubelet.service
@@ -848,7 +833,7 @@ ExecStart=/usr/local/bin/kubelet \$KUBELET_KUBECONFIG_ARGS \$KUBELET_CONFIG_ARGS
 EOF
 ```
 
-#### 1.4 生成kubelet的配置文件
+#### 1.3 生成kubelet的配置文件
 
 ```bash
 cat << EOF > /etc/kubernetes/kubelet-conf.yml
@@ -929,15 +914,32 @@ allowedUnsafeSysctls:
 EOF
 ```
 
-#### 1.5 启动kubelet并配置为开机启动
+#### 1.4 启动master的kubelet并配置为开机启动
 
 ```bash
 systemctl daemon-reload && systemctl enable --now kubelet
 ```
 
+#### 1.5 发送证书和配置文件到其他节点
+
+```bash
+WorkNodes='k8s-node01 k8s-node02'
+
+cd /etc/kubernetes/
+for NODE in $WorkNodes; do
+     for FILE in pki/ca.pem pki/ca-key.pem pki/front-proxy-ca.pem bootstrap-kubelet.kubeconfig; do
+       scp /etc/kubernetes/$FILE $NODE:/etc/kubernetes/${FILE}
+     done
+     scp /usr/lib/systemd/system/kubelet.service $NODE:/usr/lib/systemd/system/
+     scp /etc/systemd/system/kubelet.service.d/10-kubelet.conf $NODE:/etc/systemd/system/kubelet.service.d/
+     scp /etc/kubernetes/kubelet-conf.yml $NODE:/etc/kubernetes/
+     ssh $NODE "systemctl daemon-reload && systemctl enable --now kubelet"
+done
+```
+
 ### 2.kube-proxy配置
 
-#### 2.1 生成kube-proxy.kubeconfig配置文件(在master操作)
+#### 2.1 生成kube-proxy.kubeconfig配置文件
 
 ```bash
 kubectl -n kube-system create serviceaccount kube-proxy
@@ -976,18 +978,6 @@ kubectl config set-context kubernetes \
 kubectl config use-context kubernetes --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig
 ```
 
-#### 2.2 发送kube-proxy kubeconfig配置文件(在master操作)
-
-```bash
-WorkNodes='k8s-node01 k8s-node02'
-```
-
-```bash
-for NODE in $WorkNodes; do
-     scp /etc/kubernetes/kube-proxy.kubeconfig $NODE:/etc/kubernetes/kube-proxy.kubeconfig
-done
-```
-
 #### 2.2 生成kube-proxy systemd启动脚本
 
 ```bash
@@ -1011,8 +1001,6 @@ EOF
 ```
 
 #### 2.3 生成kube-proxy配置文件
-
-kube-proxy.conf
 
 ```bash
 cat << EOF > /etc/kubernetes/kube-proxy.conf
@@ -1055,10 +1043,23 @@ udpIdleTimeout: 250ms
 EOF
 ```
 
-#### 2.4 启动kube-proxy并配置开机启动
+#### 2.4 启动master kube-proxy并配置开机启动
 
 ```bash
 systemctl daemon-reload && systemctl enable --now kube-proxy
+```
+
+#### 2.5 发送所有kube-proxy配置文件到其他节点
+
+```bash
+WorkNodes='k8s-node01 k8s-node02'
+
+for NODE in $WorkNodes; do
+     scp /etc/kubernetes/kube-proxy.kubeconfig $NODE:/etc/kubernetes/kube-proxy.kubeconfig
+     scp /usr/lib/systemd/system/kube-proxy.service $NODE:/usr/lib/systemd/system/
+     scp /etc/kubernetes/kube-proxy.conf $NODE:/etc/kubernetes/
+     ssh $NODE "systemctl daemon-reload && systemctl enable --now kube-proxy"
+done
 ```
 
 ## 六、安装Calico
