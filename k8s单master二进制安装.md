@@ -1062,7 +1062,27 @@ for NODE in $WorkNodes; do
 done
 ```
 
-## 六、安装Calico
+## 六、配置k8s节点角色
+
+master节点
+
+```bash
+kubectl label nodes k8s-master01 node-role.kubernetes.io/master=
+```
+
+node节点
+
+```bash
+kubectl label nodes k8s-node01 k8s-node02 node-role.kubernetes.io/node=
+```
+
+配置master节点不接受负载
+
+```bash
+kubectl taint node k8s-master01 master=true:NoSchedule
+```
+
+## 七、安装Calico
 
 在master节点操作
 
@@ -1101,7 +1121,7 @@ sed -i 's#value: "Always"#value: "Never"#g' calico-etcd.yaml
 kubectl apply -f calico-etcd.yaml
 ```
 
-## 七、安装coredns
+## 八、安装coredns
 
 ### 1.下载coredns安装文件
 
@@ -1116,7 +1136,7 @@ cd deployment/kubernetes
 ./deploy.sh -s -i 10.96.0.10 | kubectl apply -f -
 ```
 
-## 八、安装ingress-nginx
+## 九、安装ingress-nginx
 
 ### 1.给需要部署Ingress的节点打标签
 
