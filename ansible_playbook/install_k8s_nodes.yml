@@ -31,7 +31,7 @@
         - { filename: "/etc/kubernetes/pki/front-proxy-ca.pem", path: "/etc/kubernetes/pki/" }
         - { filename: "/usr/lib/systemd/system/kubelet.service", path: "/usr/lib/systemd/system/" }
         - { filename: "/etc/systemd/system/kubelet.service.d/10-kubelet.conf", path: "/etc/systemd/system/kubelet.service.d/" }
-        - { filename: "/etc/kubernetes/kubelet-conf.yml", path: "/etc/kubernetes/" }
+        - { filename: "/etc/kubernetes/kubelet.yaml", path: "/etc/kubernetes/" }
 
     - name: 启动kubelet服务
       systemd:
