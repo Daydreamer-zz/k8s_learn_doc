@@ -1,0 +1,125 @@
+# RBAC authn and authz
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: elasticsearch-logging
+  namespace: logging
+  labels:
+    k8s-app: elasticsearch-logging
+    addonmanager.kubernetes.io/mode: Reconcile
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: elasticsearch-logging
+  labels:
+    k8s-app: elasticsearch-logging
+    addonmanager.kubernetes.io/mode: Reconcile
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - "services"
+      - "namespaces"
+      - "endpoints"
+    verbs:
+      - "get"
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: elasticsearch-logging
+  labels:
+    k8s-app: elasticsearch-logging
+    addonmanager.kubernetes.io/mode: Reconcile
+subjects:
+  - kind: ServiceAccount
+    name: elasticsearch-logging
+    namespace: logging
+    apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: elasticsearch-logging
+  apiGroup: ""
+---
+# Elasticsearch deployment itself
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch-logging
+  namespace: logging
+  labels:
+    k8s-app: elasticsearch-logging
+    version: v7.10.2
+    addonmanager.kubernetes.io/mode: Reconcile
+spec:
+  serviceName: elasticsearch-logging
+  replicas: 2
+  selector:
+    matchLabels:
+      k8s-app: elasticsearch-logging
+      version: v7.10.2
+  template:
+    metadata:
+      labels:
+        k8s-app: elasticsearch-logging
+        version: v7.10.2
+    spec:
+      serviceAccountName: elasticsearch-logging
+      initContainers:
+        - image: registry.cn-qingdao.aliyuncs.com/zz_google_containers/alpine:3.6
+          command: [ "/sbin/sysctl", "-w", "vm.max_map_count=262144" ]
+          name: elasticsearch-logging-init
+          securityContext:
+            privileged: true
+      containers:
+        - image: registry.cn-qingdao.aliyuncs.com/zz_google_containers/fluentd_elasticsearch:v7.10.2
+          name: elasticsearch-logging
+          imagePullPolicy: Always
+          resources:
+            # need more cpu upon initialization, therefore burstable class
+            limits:
+              cpu: 1000m
+              memory: 3Gi
+            requests:
+              cpu: 100m
+              memory: 3Gi
+          ports:
+            - containerPort: 9200
+              name: db
+              protocol: TCP
+            - containerPort: 9300
+              name: transport
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: transport
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: transport
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          volumeMounts:
+            - name: elasticsearch-logging
+              mountPath: /data
+          env:
+            - name: "NAMESPACE"
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: "MINIMUM_MASTER_NODES"
+              value: "1"
+#      volumes:
+#        - name: elasticsearch-logging
+#          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-logging
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: "csi-rbd-sc"  #填写一个可用的storageclass
+        resources:
+          requests:
+            storage: 10Gi
