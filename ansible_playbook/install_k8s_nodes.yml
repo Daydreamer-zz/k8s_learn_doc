@@ -51,7 +51,7 @@
         dest: "{{ item.path }}"
       with_items:
         - { filename: "/etc/kubernetes/kube-proxy.kubeconfig", path: "/etc/kubernetes/" }
-        - { filename: "/etc/kubernetes/kube-proxy.yaml", path: "/etc/kubernetes/" }
+        - { filename: "/etc/kubernetes/kube-proxy-conf.yaml", path: "/etc/kubernetes/" }
         - { filename: "/usr/lib/systemd/system/kube-proxy.service", path: "/usr/lib/systemd/system/" }
 
     - name: 启动kube-proxy服务

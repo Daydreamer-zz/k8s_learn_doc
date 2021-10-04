@@ -1478,7 +1478,7 @@ After=network.target
 
 [Service]
 ExecStart=/usr/local/bin/kube-proxy \\
-  --config=/etc/kubernetes/kube-proxy.yaml \\
+  --config=/etc/kubernetes/kube-proxy-conf.yaml \\
   --v=2
 
 Restart=always
@@ -1491,10 +1491,10 @@ EOF
 
 #### 2.3 生成kube-proxy配置文件
 
-kube-proxy.yaml
+kube-proxy-conf.yaml
 
 ```bash
-cat << EOF > /etc/kubernetes/kube-proxy.yaml
+cat << EOF > /etc/kubernetes/kube-proxy-conf.yaml
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 bindAddress: 0.0.0.0
 clientConnection:
@@ -1548,7 +1548,7 @@ WorkNodes='k8s-master02 k8s-master03 k8s-node01 k8s-node02'
 for NODE in $WorkNodes; do
      scp /etc/kubernetes/kube-proxy.kubeconfig $NODE:/etc/kubernetes/kube-proxy.kubeconfig
      scp /usr/lib/systemd/system/kube-proxy.service $NODE:/usr/lib/systemd/system/
-     scp /etc/kubernetes/kube-proxy.yaml $NODE:/etc/kubernetes/
+     scp /etc/kubernetes/kube-proxy-conf.yaml $NODE:/etc/kubernetes/
      ssh $NODE "systemctl daemon-reload && systemctl enable --now kube-proxy"
 done
 ```
