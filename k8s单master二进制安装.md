@@ -78,7 +78,7 @@ EOF
 ### 2.安装基础包
 
 ```bash
-yum install wget jq psmisc vim net-tools telnet yum-utils device-mapper-persistent-data lvm2 git ipvsadm ipset sysstat conntrack libseccomp chrony bash-completion lrzsz htop -y
+yum install wget jq psmisc vim net-tools telnet yum-utils device-mapper-persistent-data lvm2 git ipvsadm ipset sysstat conntrack libseccomp chrony bash-completion lrzsz htop socat -y
 ```
 
 ### 3.环境优化
