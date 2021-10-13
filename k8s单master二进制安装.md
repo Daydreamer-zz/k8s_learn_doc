@@ -911,6 +911,14 @@ rotateServerCertificates: true
 allowedUnsafeSysctls:
  - "net.core*"
  - "net.ipv4.*"
+kubeReserved:
+  cpu: "1"
+  memory: 1Gi
+  ephemeral-storage: 10Gi
+systemReserved:
+  cpu: "1"
+  memory: 1Gi
+  ephemeral-storage: 10Gi
 EOF
 ```
 
