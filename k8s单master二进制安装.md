@@ -826,7 +826,7 @@ cat << EOF > /etc/systemd/system/kubelet.service.d/10-kubelet.conf
 [Service]
 Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.kubeconfig --kubeconfig=/etc/kubernetes/kubelet.kubeconfig"
 Environment="KUBELET_SYSTEM_ARGS=--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin"
-Environment="KUBELET_CONFIG_ARGS=--config=/etc/kubernetes/kubelet.yaml --pod-infra-container-image=registry.cn-qingdao.aliyuncs.com/zz_google_containers/pause-amd64:3.2"
+Environment="KUBELET_CONFIG_ARGS=--config=/etc/kubernetes/kubelet-conf.yaml --pod-infra-container-image=registry.cn-qingdao.aliyuncs.com/zz_google_containers/pause-amd64:3.2"
 Environment="KUBELET_EXTRA_ARGS=--tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 --image-pull-progress-deadline=30m "
 ExecStart=
 ExecStart=/usr/local/bin/kubelet \$KUBELET_KUBECONFIG_ARGS \$KUBELET_CONFIG_ARGS \$KUBELET_SYSTEM_ARGS \$KUBELET_EXTRA_ARGS
@@ -836,7 +836,7 @@ EOF
 #### 1.3 生成kubelet的配置文件
 
 ```bash
-cat << EOF > /etc/kubernetes/kubelet.yaml
+cat << EOF > /etc/kubernetes/kubelet-conf.yaml
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 address: 0.0.0.0
@@ -940,7 +940,7 @@ for NODE in $WorkNodes; do
      done
      scp /usr/lib/systemd/system/kubelet.service $NODE:/usr/lib/systemd/system/
      scp /etc/systemd/system/kubelet.service.d/10-kubelet.conf $NODE:/etc/systemd/system/kubelet.service.d/
-     scp /etc/kubernetes/kubelet.yaml $NODE:/etc/kubernetes/
+     scp /etc/kubernetes/kubelet-conf.yaml $NODE:/etc/kubernetes/
      ssh $NODE "systemctl daemon-reload && systemctl enable --now kubelet"
 done
 ```
