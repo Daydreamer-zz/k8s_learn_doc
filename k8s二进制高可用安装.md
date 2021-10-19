@@ -285,9 +285,10 @@ systemctl daemon-reload && systemctl restart docker
 ### 1.下载证书生成工具
 
 ```bash
-wget "https://pkg.cfssl.org/R1.2/cfssl_linux-amd64" -O /usr/local/bin/cfssl
-wget "https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64" -O /usr/local/bin/cfssljson
-chmod +x /usr/local/bin/cfssl /usr/local/bin/cfssljson
+wget "https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssl_1.6.1_linux_amd64" -O /usr/local/bin/cfssl
+wget "https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssljson_1.6.1_linux_amd64" -O /usr/local/bin/cfssljson
+wget "https://github.com/cloudflare/cfssl/releases/download/v1.6.1/cfssl-certinfo_1.6.1_linux_amd64" -O /usr/local/bin/cfssl-certinfo
+chmod +x /usr/local/bin/cfssl /usr/local/bin/cfssljson /usr/local/bin/cfssl-certinfo
 ```
 
 ### 2.创建相关目录
