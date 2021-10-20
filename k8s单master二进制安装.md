@@ -334,30 +334,14 @@ cfssl gencert -initca ca-csr.json | cfssljson -bare /etc/kubernetes/pki/ca
 #### 4.2 kube-apiserver证书
 
 ```bash
-cfssl gencert   -ca=/etc/kubernetes/pki/ca.pem \
+cfssl gencert -ca=/etc/kubernetes/pki/ca.pem \
 -ca-key=/etc/kubernetes/pki/ca-key.pem \
 -config=ca-config.json \
 -hostname=10.96.0.1,127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local,192.168.2.4 \
 -profile=kubernetes \
 apiserver-csr.json | cfssljson -bare /etc/kubernetes/pki/apiserver
 ```
-
-#### 4.3 kube-apiserver的聚合证书
-
-```bash
-cfssl gencert -initca front-proxy-ca-csr.json | cfssljson -bare /etc/kubernetes/pki/front-proxy-ca
-```
-
-```bash
-cfssl gencert \
--ca=/etc/kubernetes/pki/front-proxy-ca.pem \
--ca-key=/etc/kubernetes/pki/front-proxy-ca-key.pem \
--config=ca-config.json \
--profile=kubernetes \
-front-proxy-client-csr.json | cfssljson -bare /etc/kubernetes/pki/front-proxy-client
-```
-
-#### 4.4 kube-controller-manager证书
+#### 4.3 kube-controller-manager证书
 
 ```bash
 cfssl gencert \
@@ -368,7 +352,7 @@ cfssl gencert \
 manager-csr.json | cfssljson -bare /etc/kubernetes/pki/controller-manager
 ```
 
-#### 4.5 kube-scheduler证书
+#### 4.4 kube-scheduler证书
 
 ```bash
 cfssl gencert \
@@ -379,7 +363,7 @@ cfssl gencert \
 scheduler-csr.json | cfssljson -bare /etc/kubernetes/pki/scheduler
 ```
 
-#### 4.6 admin证书
+#### 4.5 admin证书
 
 ```bash
 cfssl gencert \
@@ -390,7 +374,24 @@ cfssl gencert \
 admin-csr.json | cfssljson -bare /etc/kubernetes/pki/admin
 ```
 
-#### 4.7 Serviceaccount Key
+#### 4.6 kube-apiserver聚合CA证书
+
+```bash
+cfssl gencert -initca front-proxy-ca-csr.json | cfssljson -bare /etc/kubernetes/pki/front-proxy-ca
+```
+
+#### 4.7 kube-apiserver聚合证书
+
+```bash
+cfssl gencert \
+-ca=/etc/kubernetes/pki/front-proxy-ca.pem \
+-ca-key=/etc/kubernetes/pki/front-proxy-ca-key.pem \
+-config=ca-config.json \
+-profile=kubernetes \
+front-proxy-client-csr.json | cfssljson -bare /etc/kubernetes/pki/front-proxy-client
+```
+
+#### 4.8 Serviceaccount Key
 
 ```bash
 openssl genrsa -out /etc/kubernetes/pki/sa.key 2048
