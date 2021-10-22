@@ -428,11 +428,11 @@ tar xf helm-v3.6.3-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm
 #### 1.2 配置bash自动补全
 
 ```bash
-kubectl completion bash > /usr/share/bash-completion/completions/kubectl
+kubectl completion bash > /etc/bash_completion.d/kubectl
 ```
 
 ```bash
-helm completion bash > /usr/share/bash-completion/completions/helm
+helm completion bash > /etc/bash_completion.d/helm
 ```
 
 ### 2.kube-controller-manager
