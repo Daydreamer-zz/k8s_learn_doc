@@ -7,8 +7,8 @@
   "names": [
     {
       "C": "CN",
-      "L": "Beijing",
-      "ST": "Beijing",
+      "L": "Qingdao",
+      "ST": "Shandong",
       "O": "system:nodes",
       "OU": "Kubernetes-manual"
     }
