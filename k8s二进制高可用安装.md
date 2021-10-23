@@ -370,7 +370,18 @@ cfssl gencert \
 scheduler-csr.json | cfssljson -bare /etc/kubernetes/pki/scheduler
 ```
 
-#### 4.5 admin证书
+#### 4.5 kube-proxy证书
+
+```bash
+cfssl gencert \
+-ca=/etc/kubernetes/pki/ca.pem \
+-ca-key=/etc/kubernetes/pki/ca-key.pem \
+-config=ca-config.json \
+-profile=kubernetes \
+kube-proxy-csr.json | cfssljson -bare /etc/kubernetes/pki/kube-proxy
+```
+
+#### 4.6 admin证书
 
 ```bash
 cfssl gencert \
@@ -381,13 +392,13 @@ cfssl gencert \
 admin-csr.json | cfssljson -bare /etc/kubernetes/pki/admin
 ```
 
-#### 4.6 kube-apiserver聚合CA证书
+#### 4.7 kube-apiserver聚合CA证书
 
 ```bash
 cfssl gencert -initca front-proxy-ca-csr.json | cfssljson -bare /etc/kubernetes/pki/front-proxy-ca
 ```
 
-#### 4.7 kube-apiserver聚合证书
+#### 4.8 kube-apiserver聚合证书
 
 ```bash
 cfssl gencert \
@@ -398,7 +409,7 @@ cfssl gencert \
 front-proxy-client-csr.json | cfssljson -bare /etc/kubernetes/pki/front-proxy-client
 ```
 
-#### 4.8 Serviceaccount Key
+#### 4.9 Serviceaccount Key
 
 ```bash
 openssl genrsa -out /etc/kubernetes/pki/sa.key 2048
@@ -1441,40 +1452,26 @@ done
 #### 2.1 生成kube-proxy.kubeconfig配置文件
 
 ```bash
-kubectl -n kube-system create serviceaccount kube-proxy
-
-kubectl create clusterrolebinding system:kube-proxy --clusterrole system:node-proxier --serviceaccount kube-system:kube-proxy
-
-
-SECRET=$(kubectl -n kube-system get sa/kube-proxy --output=jsonpath='{.secrets[0].name}')
-
-JWT_TOKEN=$(kubectl -n kube-system get secret/$SECRET --output=jsonpath='{.data.token}' | base64 -d)
-
-
-PKI_DIR=/etc/kubernetes/pki
-
-K8S_DIR=/etc/kubernetes
-
-
 kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
 --server=https://192.168.2.24:8443 \
---kubeconfig=${K8S_DIR}/kube-proxy.kubeconfig
-
-
-kubectl config set-credentials kubernetes \
---token=${JWT_TOKEN} \
 --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig
 
 
-kubectl config set-context kubernetes \
+kubectl config set-context system:kube-proxy@kubernetes \
 --cluster=kubernetes \
---user=kubernetes \
+--user=system:kube-proxy \
 --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig
 
+kubectl config set-credentials system:kube-proxy \
+--client-certificate=/etc/kubernetes/pki/kube-proxy.pem \
+--client-key=/etc/kubernetes/pki/kube-proxy-key.pem \
+--embed-certs=true \
+--kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig
 
-kubectl config use-context kubernetes --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig
+kubectl config use-context system:kube-proxy@kubernetes \
+--kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig
 ```
 
 #### 2.2 生成kube-proxy systemd启动脚本
