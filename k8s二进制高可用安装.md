@@ -341,7 +341,8 @@ cfssl gencert -initca ca-csr.json | cfssljson -bare /etc/kubernetes/pki/ca
 #### 4.2 kube-apiserver证书
 
 ```bash
-cfssl gencert -ca=/etc/kubernetes/pki/ca.pem \
+cfssl gencert \
+-ca=/etc/kubernetes/pki/ca.pem \
 -ca-key=/etc/kubernetes/pki/ca-key.pem \
 -config=ca-config.json \
 -hostname=10.96.0.1,127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local,192.168.2.4,192.168.2.5,192.168.2.6,192.168.2.24 \
