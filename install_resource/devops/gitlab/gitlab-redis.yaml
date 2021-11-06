@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitlab-redis
+  namespace: devops
+  labels:
+    app: gitlab-redis
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gitlab-redis
+  template:
+    metadata:
+      name: gitlab-redis
+      labels:
+        app: gitlab-redis
+    spec:
+      restartPolicy: Always
+      containers:
+        - name: gitlab-redis
+          imagePullPolicy: IfNotPresent
+          image: redis
+          ports:
+            - containerPort: 6379
+              name: redis
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/redis
+              name: gitlab-redis-data
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+      volumes:
+        - name: gitlab-redis-data
+          persistentVolumeClaim:
+            claimName: gitlab-redis-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: devops
+  name: gitlab-redis
+  labels:
+    app: gitlab-redis
+spec:
+  ports:
+    - port: 6379
+      name: redis
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app: gitlab-redis
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gitlab-redis-data
+  namespace: devops
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: csi-rbd-sc
+

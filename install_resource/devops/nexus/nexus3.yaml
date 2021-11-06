@@ -1,0 +1,105 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: nexus3
+  name: nexus3
+  namespace: devops
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: nexus3
+  template:
+    metadata:
+      labels:
+        app: nexus3
+      namespace: devops
+      name: nexus3
+    spec:
+      containers:
+        - name: nexus3
+          image: sonatype/nexus3:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+              name: web2
+              protocol: TCP
+            - containerPort: 8081
+              name: web
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: nexushome
+              mountPath: /nexus-data
+      volumes:
+        - name: nexushome
+          persistentVolumeClaim:
+            claimName: nexus3-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nexus3-data
+  namespace: devops
+  labels:
+    app: nexus3
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  volumeMode: Filesystem
+  storageClassName: csi-rbd-sc
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: nexus3
+ namespace: devops
+ labels:
+   app: nexus3
+spec:
+ selector:
+   app: nexus3
+ type: ClusterIP
+ ports:
+ - name: web
+   port: 8081
+   targetPort: 8081
+ - name: web2
+   port: 8083
+   targetPort: 8083
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: devops
+  name: nexus3-ingress
+  labels:
+    app: nexus3
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: nexus.node1.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: nexus3
+                port:
+                  name: web
+            pathType: Prefix
+            path: /
+

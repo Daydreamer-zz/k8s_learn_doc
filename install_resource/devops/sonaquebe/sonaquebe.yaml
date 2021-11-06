@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube
+  namespace: devops
+  labels:
+    app: sonarqube
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+    spec:
+      restartPolicy: Always
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        - name: init-sysctl
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command: ["sysctl", "-w", "vm.max_map_count=262144"]
+          securityContext:
+            privileged: true
+      containers:
+        - name: sonarqube
+          image: mc1arke/sonarqube-with-community-branch-plugin:lts
+          ports:
+            - containerPort: 9000
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            - name: SONAR_JDBC_USERNAME
+              value: "sonar"
+            - name: SONAR_JDBC_PASSWORD
+              value: "sonar"
+            - name: SONARQUBE_JDBC_URL
+              value: "jdbc:postgresql://postgresql.devops.svc.cluster.local:5432/sonar"
+            - name: sonar.core.serverBaseUrl
+              value: http://sona.node1.com/
+          livenessProbe:
+            httpGet:
+              path: /sessions/new
+              port: 9000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /sessions/new
+              port: 9000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 6
+          resources:
+            limits:
+              cpu: 2000m
+              memory: 2048Mi
+            requests:
+              cpu: 1000m
+              memory: 1024Mi
+          volumeMounts:
+            - mountPath: /opt/sonarqube/conf
+              name: data
+              subPath: conf
+            - mountPath: /opt/sonarqube/data
+              name: data
+              subPath: data
+            - mountPath: /opt/sonarqube/extensions
+              name: data
+              subPath: extensions
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: sonarqube-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-data
+  namespace: devops
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: csi-rbd-sc
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube
+  namespace: devops
+  labels:
+    app: sonarqube
+spec:
+  type: ClusterIP
+  ports:
+    - name: sonarqube
+      port: 9000
+      targetPort: 9000
+      protocol: TCP
+  selector:
+    app: sonarqube
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: devops
+  name: sonarqube-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: sona.node1.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: sonarqube
+                port:
+                  name: sonarqube
+            pathType: Prefix
+            path: /
+

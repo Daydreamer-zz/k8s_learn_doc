@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: devops
+  labels:
+    app: jenkins
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      name: jenkins
+      labels:
+        app: jenkins
+    spec:
+      terminationGracePeriodSeconds: 10
+      serviceAccount: jenkins
+      restartPolicy: Always
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: jenkins
+          image: jenkins/jenkins:lts-jdk8
+          env:
+            - name: TZ
+              value: Asia/Shanghai
+            - name: LC_ALL
+              value: C.UTF-8
+          ports:
+            - containerPort: 8080
+              name: web
+              protocol: TCP
+            - name: agent
+              containerPort: 50000
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 500m
+              memory: 500Mi
+            limits:
+              cpu: 1000m
+              memory: 2048Mi
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /login
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 12
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /login
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 12
+          volumeMounts:
+            - mountPath: /var/jenkins_home
+              name: jenkins-data
+      volumes:
+        - name: jenkins-data
+          persistentVolumeClaim:
+            claimName: jenkins-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins
+  namespace: devops
+  labels:
+    app: jenkins
+spec:
+  selector:
+    app: jenkins
+  ports:
+    - port: 8080
+      name: web
+      protocol: TCP
+      targetPort: 8080
+    - port: 50000
+      name: agent
+      protocol: TCP
+      targetPort: 50000
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jenkins-data
+  namespace: devops
+  labels:
+    app: jenkins
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  volumeMode: Filesystem
+  storageClassName: csi-rbd-sc
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: devops
+  name: jenkins-ingress
+  labels:
+    app: jenkins
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: jenkins.node1.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: jenkins
+                port:
+                  name: web
+            pathType: Prefix
+            path: /
