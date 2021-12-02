@@ -72,7 +72,7 @@ spec:
 - labelSelector：Pod选择器配置，可以配置多个
 - matchExpressions：和节点亲和力配置一致
 - operator：配置和节点亲和力一致，但是没有Gt和Lt
-- togologykey：匹配的拓扑域的key，也就是节点上的Label的key，key和value相同的为同一个域，可以用于标注不同的机房和地区
+- topologykey：匹配的拓扑域的key，也就是节点上的Label的key，key和value相同的为同一个域，可以用于标注不同的机房和地区
 - Namespaces：和哪个命名空间的Pod进行匹配，为空为当前的命名空间
 
 ```yaml
