@@ -386,6 +386,12 @@ cfssl gencert \
 etcd-csr.json | cfssljson -bare /etc/etcd/ssl/etcd
 ```
 
+#### 3.3 软链接
+
+```bash
+ln -s /etc/etcd/ssl/* /etc/kubernetes/pki/etcd/
+```
+
 ### 4.kubernetes
 
 #### 4.1 kubernetes CA证书
