@@ -149,6 +149,7 @@ ipt_set
 ipt_rpfilter
 ipt_REJECT
 ipip
+br_netfilter
 EOF
 ```
 
