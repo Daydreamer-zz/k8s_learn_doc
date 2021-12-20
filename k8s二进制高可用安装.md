@@ -165,7 +165,7 @@ cat << EOF > /etc/sysctl.d/k8s.conf
 # 开启IP转发.
 net.ipv4.ip_forward = 1
 
-# 要求iptables不对bridge的数据进行处理
+# 表示bridge 设备在二层转发时也去调用 iptables 配置的三层规则 (包含 conntrack)
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 
