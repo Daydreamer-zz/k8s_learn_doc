@@ -1243,7 +1243,8 @@ ExecStart=/usr/local/bin/kube-controller-manager \\
       --cluster-cidr=172.16.0.0/12 \\
       --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem \\
       --node-cidr-mask-size=24 \\
-      --cluster-signing-duration=876000h0m0s
+      --cluster-signing-duration=876000h0m0s \\
+      --client-ca-file=/etc/kubernetes/pki/ca.pem
       
 Restart=always
 RestartSec=10s
@@ -1278,7 +1279,8 @@ ExecStart=/usr/local/bin/kube-scheduler \\
       --logtostderr=true \\
       --address=0.0.0.0 \\
       --leader-elect=true \\
-      --kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+      --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \\
+      --client-ca-file=/etc/kubernetes/pki/ca.pem
 
 Restart=always
 RestartSec=10s
