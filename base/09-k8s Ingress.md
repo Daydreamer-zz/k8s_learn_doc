@@ -50,11 +50,14 @@ kubectl label nodes k8s-node01 k8s-node02  ingress=true
 ```
 
 ### 1.2.6 安装Ingress
-
+通过修改value.yaml
 ```bash
 helm install ingress-nginx -n ingress-nginx .
 ```
-
+或者直接通过`helm install --set`
+```bash
+helm -n ingress-nginx  install ingress-nginx ingress-nginx/ingress-nginx   --set controller.hostNetwork=true --set controller.dnsPolicy=ClusterFirstWithHostNet --set-string  controller.nodeSelector.ingress=true --set controller.kind=DaemonSet --set controller.metrics.enabled=true --set controller.ingressClassResource.default=true --set controller.service.type=ClusterIP
+```
 ## 1.3 Ingress入门使用
 
 定义一个Ingress资源，需要搭配Service使用
