@@ -22,6 +22,7 @@ spec:
         - /usr/local/bin/kube-proxy
         - --config=/var/lib/kube-proxy/kube-proxy-conf.yaml
         - --hostname-override=$(NODE_NAME)
+        - --v=2
         env:
         - name: NODE_NAME
           valueFrom:
