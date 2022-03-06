@@ -78,7 +78,6 @@ spec:
       ports:
         - name: metrics
           containerPort: 10249
-          
   updateStrategy:
     rollingUpdate:
       maxSurge: 0
