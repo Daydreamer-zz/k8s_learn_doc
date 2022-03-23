@@ -64,6 +64,11 @@ spec:
         - name: jenkins-data
           persistentVolumeClaim:
             claimName: jenkins-data
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
 ---
 apiVersion: v1
 kind: Service
