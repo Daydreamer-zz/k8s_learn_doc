@@ -100,7 +100,6 @@ spec:
     requests:
       storage: 20Gi
   volumeMode: Filesystem
-  storageClassName: csi-rbd-sc
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
