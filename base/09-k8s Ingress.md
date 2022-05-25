@@ -56,7 +56,7 @@ helm install ingress-nginx -n ingress-nginx .
 ```
 或者直接通过`helm install --set`
 ```bash
-helm -n ingress-nginx  install ingress-nginx ingress-nginx/ingress-nginx   --set controller.hostNetwork=true --set controller.dnsPolicy=ClusterFirstWithHostNet --set-string  controller.nodeSelector.ingress=true --set controller.kind=DaemonSet --set controller.metrics.enabled=true --set controller.ingressClassResource.default=true --set controller.service.type=ClusterIP
+helm -n ingress-nginx  install ingress-nginx ingress-nginx/ingress-nginx   --set controller.hostNetwork=true --set controller.dnsPolicy=ClusterFirstWithHostNet --set-string  controller.nodeSelector.ingress=true --set controller.kind=DaemonSet --set controller.metrics.enabled=true --set controller.ingressClassResource.default=true --set controller.service.type=ClusterIP --create-namespace
 ```
 ## 1.3 Ingress入门使用
 
