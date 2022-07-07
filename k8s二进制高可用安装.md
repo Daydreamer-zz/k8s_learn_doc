@@ -321,8 +321,7 @@ cat << EOF > /etc/docker/daemon.json
     "max-size": "300m",
     "max-file": "2"
   },
-  "live-restore": true,
-  "insecure-registries" : ["hb.node1.com"]
+  "live-restore": true
 }
 EOF
 ```
@@ -497,13 +496,9 @@ wget https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
 
 ```bash
 tar -xf kubernetes-server-linux-amd64.tar.gz  --strip-components=3 -C /usr/local/bin kubernetes/server/bin/kube{let,ctl,-apiserver,-controller-manager,-scheduler,-proxy}
-```
 
-```bash
 tar -zxvf etcd-v3.5.0-linux-amd64.tar.gz --strip-components=1 -C /usr/local/bin etcd-v3.5.0-linux-amd64/etcd{,ctl}
-```
 
-```bash
 tar xf helm-v3.6.3-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm
 ```
 
@@ -511,9 +506,7 @@ tar xf helm-v3.6.3-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm
 
 ```bash
 kubectl completion bash > /etc/bash_completion.d/kubectl
-```
 
-```bash
 helm completion bash > /etc/bash_completion.d/helm
 ```
 
@@ -641,7 +634,7 @@ done
 k8s-master01
 
 ```bash
-cat << EOF > /etc/etcd/etcd.config.yml
+cat << \EOF > /etc/etcd/etcd.config.yml
 name: 'k8s-master01'
 data-dir: /var/lib/etcd
 wal-dir: /var/lib/etcd/wal
@@ -694,7 +687,7 @@ EOF
 k8s-master02
 
 ```bash
-cat <<EOF > /etc/etcd/etcd.config.yml
+cat << \EOF > /etc/etcd/etcd.config.yml
 name: 'k8s-master02'
 data-dir: /var/lib/etcd
 wal-dir: /var/lib/etcd/wal
@@ -747,7 +740,7 @@ EOF
 k8s-master03
 
 ```bash
-cat <<EOF > /etc/etcd/etcd.config.yml
+cat << \EOF > /etc/etcd/etcd.config.yml
 name: 'k8s-master03'
 data-dir: /var/lib/etcd
 wal-dir: /var/lib/etcd/wal
@@ -802,7 +795,7 @@ EOF
 所有master节点配置一样
 
 ```bash
-cat <<EOF > /usr/lib/systemd/system/etcd.service
+cat << \EOF > /usr/lib/systemd/system/etcd.service
 [Unit]
 Description=Etcd Service
 Documentation=https://coreos.com/etcd/docs/latest/
@@ -1045,45 +1038,45 @@ systemctl enable haproxy keepalived --now
 k8s-master01
 
 ```bash
-cat <<EOF > /usr/lib/systemd/system/kube-apiserver.service
+cat << \EOF > /usr/lib/systemd/system/kube-apiserver.service
 [Unit]
 Description=Kubernetes API Server
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/kube-apiserver \\
-      --v=2  \\
-      --logtostderr=true  \\
-      --allow-privileged=true  \\
-      --bind-address=0.0.0.0  \\
-      --secure-port=6443  \\
-      --insecure-port=0  \\
-      --advertise-address=192.168.2.4 \\
-      --service-cluster-ip-range=10.96.0.0/12  \\
-      --service-node-port-range=30000-32767  \\
-      --etcd-servers=https://192.168.2.4:2379,https://192.168.2.5:2379,https://192.168.2.6:2379 \\
-      --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \\
-      --etcd-certfile=/etc/etcd/ssl/etcd.pem  \\
-      --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem  \\
-      --client-ca-file=/etc/kubernetes/pki/ca.pem  \\
-      --tls-cert-file=/etc/kubernetes/pki/apiserver.pem  \\
-      --tls-private-key-file=/etc/kubernetes/pki/apiserver-key.pem  \\
-      --kubelet-client-certificate=/etc/kubernetes/pki/apiserver.pem  \\
-      --kubelet-client-key=/etc/kubernetes/pki/apiserver-key.pem  \\
-      --service-account-key-file=/etc/kubernetes/pki/sa.pub  \\
-      --service-account-signing-key-file=/etc/kubernetes/pki/sa.key  \\
-      --service-account-issuer=https://kubernetes.default.svc.cluster.local \\
-      --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname  \\
-      --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota  \\
-      --authorization-mode=Node,RBAC  \\
-      --enable-bootstrap-token-auth=true  \\
-      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem  \\
-      --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.pem  \\
-      --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client-key.pem  \\
-      --requestheader-allowed-names=aggregator  \\
-      --requestheader-group-headers=X-Remote-Group  \\
-      --requestheader-extra-headers-prefix=X-Remote-Extra-  \\
+ExecStart=/usr/local/bin/kube-apiserver \
+      --v=2  \
+      --logtostderr=true  \
+      --allow-privileged=true  \
+      --bind-address=0.0.0.0  \
+      --secure-port=6443  \
+      --insecure-port=0  \
+      --advertise-address=192.168.2.4 \
+      --service-cluster-ip-range=10.96.0.0/12  \
+      --service-node-port-range=30000-32767  \
+      --etcd-servers=https://192.168.2.4:2379,https://192.168.2.5:2379,https://192.168.2.6:2379 \
+      --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \
+      --etcd-certfile=/etc/etcd/ssl/etcd.pem  \
+      --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem  \
+      --client-ca-file=/etc/kubernetes/pki/ca.pem  \
+      --tls-cert-file=/etc/kubernetes/pki/apiserver.pem  \
+      --tls-private-key-file=/etc/kubernetes/pki/apiserver-key.pem  \
+      --kubelet-client-certificate=/etc/kubernetes/pki/apiserver.pem  \
+      --kubelet-client-key=/etc/kubernetes/pki/apiserver-key.pem  \
+      --service-account-key-file=/etc/kubernetes/pki/sa.pub  \
+      --service-account-signing-key-file=/etc/kubernetes/pki/sa.key  \
+      --service-account-issuer=https://kubernetes.default.svc.cluster.local \
+      --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname  \
+      --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota  \
+      --authorization-mode=Node,RBAC  \
+      --enable-bootstrap-token-auth=true  \
+      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem  \
+      --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.pem  \
+      --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client-key.pem  \
+      --requestheader-allowed-names=aggregator  \
+      --requestheader-group-headers=X-Remote-Group  \
+      --requestheader-extra-headers-prefix=X-Remote-Extra-  \
       --requestheader-username-headers=X-Remote-User
       # --token-auth-file=/etc/kubernetes/token.csv
 
@@ -1099,45 +1092,45 @@ EOF
 k8s-master02
 
 ```bash
-cat <<EOF > /usr/lib/systemd/system/kube-apiserver.service
+cat << \EOF > /usr/lib/systemd/system/kube-apiserver.service
 [Unit]
 Description=Kubernetes API Server
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/kube-apiserver \\
-      --v=2  \\
-      --logtostderr=true  \\
-      --allow-privileged=true  \\
-      --bind-address=0.0.0.0  \\
-      --secure-port=6443  \\
-      --insecure-port=0  \\
-      --advertise-address=192.168.2.5 \\
-      --service-cluster-ip-range=10.96.0.0/12  \\
-      --service-node-port-range=30000-32767  \\
-      --etcd-servers=https://192.168.2.4:2379,https://192.168.2.5:2379,https://192.168.2.6:2379 \\
-      --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \\
-      --etcd-certfile=/etc/etcd/ssl/etcd.pem  \\
-      --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem  \\
-      --client-ca-file=/etc/kubernetes/pki/ca.pem  \\
-      --tls-cert-file=/etc/kubernetes/pki/apiserver.pem  \\
-      --tls-private-key-file=/etc/kubernetes/pki/apiserver-key.pem  \\
-      --kubelet-client-certificate=/etc/kubernetes/pki/apiserver.pem  \\
-      --kubelet-client-key=/etc/kubernetes/pki/apiserver-key.pem  \\
-      --service-account-key-file=/etc/kubernetes/pki/sa.pub  \\
-      --service-account-signing-key-file=/etc/kubernetes/pki/sa.key  \\
-      --service-account-issuer=https://kubernetes.default.svc.cluster.local \\
-      --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname  \\
-      --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota  \\
-      --authorization-mode=Node,RBAC  \\
-      --enable-bootstrap-token-auth=true  \\
-      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem  \\
-      --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.pem  \\
-      --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client-key.pem  \\
-      --requestheader-allowed-names=aggregator  \\
-      --requestheader-group-headers=X-Remote-Group  \\
-      --requestheader-extra-headers-prefix=X-Remote-Extra-  \\
+ExecStart=/usr/local/bin/kube-apiserver \
+      --v=2  \
+      --logtostderr=true  \
+      --allow-privileged=true  \
+      --bind-address=0.0.0.0  \
+      --secure-port=6443  \
+      --insecure-port=0  \
+      --advertise-address=192.168.2.5 \
+      --service-cluster-ip-range=10.96.0.0/12  \
+      --service-node-port-range=30000-32767  \
+      --etcd-servers=https://192.168.2.4:2379,https://192.168.2.5:2379,https://192.168.2.6:2379 \
+      --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \
+      --etcd-certfile=/etc/etcd/ssl/etcd.pem  \
+      --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem  \
+      --client-ca-file=/etc/kubernetes/pki/ca.pem  \
+      --tls-cert-file=/etc/kubernetes/pki/apiserver.pem  \
+      --tls-private-key-file=/etc/kubernetes/pki/apiserver-key.pem  \
+      --kubelet-client-certificate=/etc/kubernetes/pki/apiserver.pem  \
+      --kubelet-client-key=/etc/kubernetes/pki/apiserver-key.pem  \
+      --service-account-key-file=/etc/kubernetes/pki/sa.pub  \
+      --service-account-signing-key-file=/etc/kubernetes/pki/sa.key  \
+      --service-account-issuer=https://kubernetes.default.svc.cluster.local \
+      --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname  \
+      --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota  \
+      --authorization-mode=Node,RBAC  \
+      --enable-bootstrap-token-auth=true  \
+      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem  \
+      --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.pem  \
+      --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client-key.pem  \
+      --requestheader-allowed-names=aggregator  \
+      --requestheader-group-headers=X-Remote-Group  \
+      --requestheader-extra-headers-prefix=X-Remote-Extra-  \
       --requestheader-username-headers=X-Remote-User
       # --token-auth-file=/etc/kubernetes/token.csv
 
@@ -1153,45 +1146,45 @@ EOF
 k8s-master03
 
 ```bash
-cat <<EOF > /usr/lib/systemd/system/kube-apiserver.service
+cat << \EOF > /usr/lib/systemd/system/kube-apiserver.service
 [Unit]
 Description=Kubernetes API Server
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/kube-apiserver \\
-      --v=2  \\
-      --logtostderr=true  \\
-      --allow-privileged=true  \\
-      --bind-address=0.0.0.0  \\
-      --secure-port=6443  \\
-      --insecure-port=0  \\
-      --advertise-address=192.168.2.6 \\
-      --service-cluster-ip-range=10.96.0.0/12  \\
-      --service-node-port-range=30000-32767  \\
-      --etcd-servers=https://192.168.2.4:2379,https://192.168.2.5:2379,https://192.168.2.6:2379 \\
-      --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \\
-      --etcd-certfile=/etc/etcd/ssl/etcd.pem  \\
-      --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem  \\
-      --client-ca-file=/etc/kubernetes/pki/ca.pem  \\
-      --tls-cert-file=/etc/kubernetes/pki/apiserver.pem  \\
-      --tls-private-key-file=/etc/kubernetes/pki/apiserver-key.pem  \\
-      --kubelet-client-certificate=/etc/kubernetes/pki/apiserver.pem  \\
-      --kubelet-client-key=/etc/kubernetes/pki/apiserver-key.pem  \\
-      --service-account-key-file=/etc/kubernetes/pki/sa.pub  \\
-      --service-account-signing-key-file=/etc/kubernetes/pki/sa.key  \\
-      --service-account-issuer=https://kubernetes.default.svc.cluster.local \\
-      --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname  \\
-      --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota  \\
-      --authorization-mode=Node,RBAC  \\
-      --enable-bootstrap-token-auth=true  \\
-      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem  \\
-      --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.pem  \\
-      --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client-key.pem  \\
-      --requestheader-allowed-names=aggregator  \\
-      --requestheader-group-headers=X-Remote-Group  \\
-      --requestheader-extra-headers-prefix=X-Remote-Extra-  \\
+ExecStart=/usr/local/bin/kube-apiserver \
+      --v=2  \
+      --logtostderr=true  \
+      --allow-privileged=true  \
+      --bind-address=0.0.0.0  \
+      --secure-port=6443  \
+      --insecure-port=0  \
+      --advertise-address=192.168.2.6 \
+      --service-cluster-ip-range=10.96.0.0/12  \
+      --service-node-port-range=30000-32767  \
+      --etcd-servers=https://192.168.2.4:2379,https://192.168.2.5:2379,https://192.168.2.6:2379 \
+      --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \
+      --etcd-certfile=/etc/etcd/ssl/etcd.pem  \
+      --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem  \
+      --client-ca-file=/etc/kubernetes/pki/ca.pem  \
+      --tls-cert-file=/etc/kubernetes/pki/apiserver.pem  \
+      --tls-private-key-file=/etc/kubernetes/pki/apiserver-key.pem  \
+      --kubelet-client-certificate=/etc/kubernetes/pki/apiserver.pem  \
+      --kubelet-client-key=/etc/kubernetes/pki/apiserver-key.pem  \
+      --service-account-key-file=/etc/kubernetes/pki/sa.pub  \
+      --service-account-signing-key-file=/etc/kubernetes/pki/sa.key  \
+      --service-account-issuer=https://kubernetes.default.svc.cluster.local \
+      --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname  \
+      --enable-admission-plugins=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,ResourceQuota  \
+      --authorization-mode=Node,RBAC  \
+      --enable-bootstrap-token-auth=true  \
+      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem  \
+      --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.pem  \
+      --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client-key.pem  \
+      --requestheader-allowed-names=aggregator  \
+      --requestheader-group-headers=X-Remote-Group  \
+      --requestheader-extra-headers-prefix=X-Remote-Extra-  \
       --requestheader-username-headers=X-Remote-User
       # --token-auth-file=/etc/kubernetes/token.csv
 
@@ -1217,33 +1210,33 @@ systemctl daemon-reload && systemctl enable --now kube-apiserver
 所有master节点都一样
 
 ```bash
-cat << EOF >  /usr/lib/systemd/system/kube-controller-manager.service
+cat << \EOF >  /usr/lib/systemd/system/kube-controller-manager.service
 [Unit]
 Description=Kubernetes Controller Manager
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/kube-controller-manager \\
-      --v=2 \\
-      --logtostderr=true \\
-      --address=0.0.0.0 \\
-      --root-ca-file=/etc/kubernetes/pki/ca.pem \\
-      --cluster-signing-cert-file=/etc/kubernetes/pki/ca.pem \\
-      --cluster-signing-key-file=/etc/kubernetes/pki/ca-key.pem \\
-      --service-account-private-key-file=/etc/kubernetes/pki/sa.key \\
-      --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \\
-      --leader-elect=true \\
-      --use-service-account-credentials=true \\
-      --node-monitor-grace-period=40s \\
-      --node-monitor-period=5s \\
-      --pod-eviction-timeout=2m0s \\
-      --controllers=*,bootstrapsigner,tokencleaner \\
-      --allocate-node-cidrs=true \\
-      --cluster-cidr=172.16.0.0/12 \\
-      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem \\
-      --node-cidr-mask-size=24 \\
-      --cluster-signing-duration=876000h0m0s \\
+ExecStart=/usr/local/bin/kube-controller-manager \
+      --v=2 \
+      --logtostderr=true \
+      --bind-address=0.0.0.0  \
+      --root-ca-file=/etc/kubernetes/pki/ca.pem \
+      --cluster-signing-cert-file=/etc/kubernetes/pki/ca.pem \
+      --cluster-signing-key-file=/etc/kubernetes/pki/ca-key.pem \
+      --service-account-private-key-file=/etc/kubernetes/pki/sa.key \
+      --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \
+      --leader-elect=true \
+      --use-service-account-credentials=true \
+      --node-monitor-grace-period=40s \
+      --node-monitor-period=5s \
+      --pod-eviction-timeout=2m0s \
+      --controllers=*,bootstrapsigner,tokencleaner \
+      --allocate-node-cidrs=true \
+      --cluster-cidr=172.16.0.0/12 \
+      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem \
+      --node-cidr-mask-size=24 \
+      --cluster-signing-duration=876000h0m0s \
       --client-ca-file=/etc/kubernetes/pki/ca.pem
       
 Restart=always
@@ -1267,19 +1260,19 @@ systemctl daemon-reload && systemctl enable --now kube-controller-manager
 所有master节点都一样
 
 ```bash
-cat << EOF > /usr/lib/systemd/system/kube-scheduler.service
+cat << \EOF > /usr/lib/systemd/system/kube-scheduler.service
 [Unit]
 Description=Kubernetes Scheduler
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/kube-scheduler \\
-      --v=2 \\
-      --logtostderr=true \\
-      --address=0.0.0.0 \\
-      --leader-elect=true \\
-      --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \\
+ExecStart=/usr/local/bin/kube-scheduler \
+      --v=2 \
+      --logtostderr=true \
+      --bind-address=0.0.0.0  \
+      --leader-elect=true \
+      --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
       --client-ca-file=/etc/kubernetes/pki/ca.pem
 
 Restart=always
@@ -1359,7 +1352,7 @@ done
 #### 1.2生成kubelet systemd启动脚本
 
 ```bash
-cat << EOF > /usr/lib/systemd/system/kubelet.service
+cat << \EOF > /usr/lib/systemd/system/kubelet.service
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1379,14 +1372,14 @@ EOF
 ```
 
 ```bash
-cat << EOF > /etc/systemd/system/kubelet.service.d/10-kubelet.conf
+cat << \EOF > /etc/systemd/system/kubelet.service.d/10-kubelet.conf
 [Service]
 Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.kubeconfig --kubeconfig=/etc/kubernetes/kubelet.kubeconfig"
-Environment="KUBELET_SYSTEM_ARGS=--network-plugin=cni --cni-conf-dir=/etc/cni/net.d --cni-bin-dir=/opt/cni/bin"
-Environment="KUBELET_CONFIG_ARGS=--config=/etc/kubernetes/kubelet-conf.yaml --pod-infra-container-image=registry.cn-qingdao.aliyuncs.com/zz_google_containers/pause-amd64:3.2"
-Environment="KUBELET_EXTRA_ARGS=--tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 --image-pull-progress-deadline=30m "
+Environment="KUBELET_SYSTEM_ARGS=--container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint=unix:///run/containerd/containerd.sock"
+Environment="KUBELET_CONFIG_ARGS=--config=/etc/kubernetes/kubelet-conf.yaml"
+Environment="KUBELET_EXTRA_ARGS=--node-labels=node.kubernetes.io/node='' "
 ExecStart=
-ExecStart=/usr/local/bin/kubelet \$KUBELET_KUBECONFIG_ARGS \$KUBELET_CONFIG_ARGS \$KUBELET_SYSTEM_ARGS \$KUBELET_EXTRA_ARGS
+ExecStart=/usr/local/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_SYSTEM_ARGS $KUBELET_EXTRA_ARGS
 EOF
 ```
 
@@ -1543,15 +1536,15 @@ kubectl config use-context system:kube-proxy@kubernetes \
 #### 2.2 生成kube-proxy systemd启动脚本
 
 ```bash
-cat << EOF > /usr/lib/systemd/system/kube-proxy.service
+cat << \EOF > /usr/lib/systemd/system/kube-proxy.service
 [Unit]
 Description=Kubernetes Kube Proxy
 Documentation=https://github.com/kubernetes/kubernetes
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/kube-proxy \\
-  --config=/etc/kubernetes/kube-proxy-conf.yaml \\
+ExecStart=/usr/local/bin/kube-proxy \
+  --config=/etc/kubernetes/kube-proxy-conf.yaml \
   --v=2
 
 Restart=always
@@ -1567,7 +1560,7 @@ EOF
 kube-proxy-conf.yaml
 
 ```bash
-cat << EOF > /etc/kubernetes/kube-proxy-conf.yaml
+cat << \EOF > /etc/kubernetes/kube-proxy-conf.yaml
 apiVersion: kubeproxy.config.k8s.io/v1alpha1
 bindAddress: 0.0.0.0
 clientConnection:
