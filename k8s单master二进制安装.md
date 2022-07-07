@@ -484,13 +484,9 @@ wget https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
 
 ```bash
 tar -xf kubernetes-server-linux-amd64.tar.gz  --strip-components=3 -C /usr/local/bin kubernetes/server/bin/kube{let,ctl,-apiserver,-controller-manager,-scheduler,-proxy}
-```
 
-```bash
 tar -zxvf etcd-v3.5.0-linux-amd64.tar.gz --strip-components=1 -C /usr/local/bin etcd-v3.5.0-linux-amd64/etcd{,ctl}
-```
 
-```bash
 tar xf helm-v3.6.3-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm
 ```
 
@@ -498,9 +494,7 @@ tar xf helm-v3.6.3-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm
 
 ```bash
 kubectl completion bash > /etc/bash_completion.d/kubectl
-```
 
-```bash
 helm completion bash > /etc/bash_completion.d/helm
 ```
 
