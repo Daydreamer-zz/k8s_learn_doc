@@ -679,7 +679,6 @@ ExecStart=/usr/local/bin/kube-apiserver \
       --allow-privileged=true  \
       --bind-address=0.0.0.0  \
       --secure-port=6443  \
-      --insecure-port=0  \
       --advertise-address=192.168.2.4 \
       --service-cluster-ip-range=10.96.0.0/12  \
       --service-node-port-range=30000-32767  \
