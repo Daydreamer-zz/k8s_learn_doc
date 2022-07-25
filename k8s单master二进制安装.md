@@ -1140,17 +1140,21 @@ kubectl label nodes k8s-node01 k8s-node02 node-role.kubernetes.io/node=
 kubectl taint node k8s-master01 master=true:NoSchedule
 ```
 
-## 七、安装Calico
+## 七、安装CNI插件
+
+这里可选cacico或者cilium
+
+### 安装calico
 
 在master节点操作
 
-### 1.下载calico资源文件
+#### 1.下载calico资源文件
 
 ```bash
 wget https://docs.projectcalico.org/manifests/calico-etcd.yaml
 ```
 
-### 2.修改calico配置文件
+#### 2.修改calico配置文件
 
 ```bash
 sed -i 's#etcd_endpoints: "http://<ETCD_IP>:<ETCD_PORT>"#etcd_endpoints: "https://192.168.2.4:2379"#g' calico-etcd.yaml
@@ -1173,10 +1177,37 @@ sed -i 's@# - name: CALICO_IPV4POOL_CIDR@- name: CALICO_IPV4POOL_CIDR@g; s@#   v
 sed -i 's#value: "Always"#value: "Never"#g' calico-etcd.yaml
 ```
 
-### 3.安装calico
+#### 3.安装calico至k8s
 
 ```bash
 kubectl apply -f calico-etcd.yaml
+```
+
+### 安装cilium
+
+#### 1.添加helm源
+
+```bash
+helm repo add cilium https://helm.cilium.io
+```
+
+#### 2.安装至k8s
+
+```bash
+helm install cilium cilium/cilium  \
+--namespace kube-system \
+--set tunnel=disabled \
+--set autoDirectNodeRoutes=true \
+--set kubeProxyReplacement=strict \
+--set loadBalancer.mode=hybrid \
+--set prometheus.enabled=true \
+--set operator.prometheus.enabled=true \
+--set ipv4NativeRoutingCIDR=172.16.0.0/12 \
+--set ipam.mode=kubernetes \
+--set k8sServiceHost=192.168.2.4 \
+--set k8sServicePort=6443 \
+--set hubble.relay.enabled=true \
+--set hubble.ui.enabled=true
 ```
 
 ## 八、安装coredns
@@ -1205,6 +1236,18 @@ kubectl label nodes k8s-node01 k8s-node02  ingress=true
 ### 2.安装ingress
 
 ```bash
-cd k8s_learn_doc/install_resource/ingress_nginx
-kubectl create -f deploy.yaml
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 ```
+
+```bash
+helm -n ingress-nginx install ingress-nginx ingress-nginx/ingress-nginx \
+--set controller.hostNetwork=true \
+--set controller.dnsPolicy=ClusterFirstWithHostNet \
+--set-string  controller.nodeSelector.ingress=true \
+--set controller.kind=DaemonSet \
+--set controller.metrics.enabled=true \
+--set controller.ingressClassResource.default=true \
+--set controller.service.type=ClusterIP \
+--create-namespace
+```
+
