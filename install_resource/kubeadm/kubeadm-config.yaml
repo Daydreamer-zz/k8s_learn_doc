@@ -41,6 +41,6 @@ networking:
   serviceSubnet: 10.96.0.0/12
 scheduler: {}
 ---
-apiVersion: kubeproxy.config.k8s.io/v1alpha1
-kind: KubeProxyConfiguration
-mode: ipvs  # kube-proxy 模式
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+serverTLSBootstrap: true
