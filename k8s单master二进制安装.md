@@ -1,6 +1,6 @@
 # 单master k8s
 
-这里的master节点ip为`192.168.2.4`，pod网段为`172.16.0.0/12`，service网段为`10.96.0.0/12`，kube-dns地址为`10.96.0.10`，您可以直接批量替这些ip以适应您的网络环境。
+这里的master节点ip为`192.168.2.3`，pod网段为`172.16.0.0/12`，service网段为`10.96.0.0/12`，kube-dns地址为`10.96.0.10`，您可以直接批量替这些ip以适应您的网络环境。
 
 ## 一、基础环境配置
 
@@ -369,7 +369,7 @@ cfssl gencert \
 -ca=/etc/etcd/ssl/etcd-ca.pem \
 -ca-key=/etc/etcd/ssl/etcd-ca-key.pem \
 -config=ca-config.json \
--hostname=127.0.0.1,k8s-master01,192.168.2.4 \
+-hostname=127.0.0.1,k8s-master01,192.168.2.3 \
 -profile=kubernetes \
 etcd-csr.json | cfssljson -bare /etc/etcd/ssl/etcd
 ```
@@ -395,7 +395,7 @@ cfssl gencert \
 -ca=/etc/kubernetes/pki/ca.pem \
 -ca-key=/etc/kubernetes/pki/ca-key.pem \
 -config=ca-config.json \
--hostname=10.96.0.1,127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local,192.168.2.4 \
+-hostname=10.96.0.1,127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local,192.168.2.3 \
 -profile=kubernetes \
 apiserver-csr.json | cfssljson -bare /etc/kubernetes/pki/apiserver
 ```
@@ -505,7 +505,7 @@ helm completion bash > /etc/bash_completion.d/helm
 kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
---server=https://192.168.2.4:6443 \
+--server=https://192.168.2.3:6443 \
 --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig
 
 #设置一个环境项，一个上下文
@@ -532,7 +532,7 @@ kubectl config use-context system:kube-controller-manager@kubernetes \
 kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
---server=https://192.168.2.4:6443 \
+--server=https://192.168.2.3:6443 \
 --kubeconfig=/etc/kubernetes/scheduler.kubeconfig
 
 
@@ -557,7 +557,7 @@ kubectl config use-context system:kube-scheduler@kubernetes \
 kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
---server=https://192.168.2.4:6443 \
+--server=https://192.168.2.3:6443 \
 --kubeconfig=/etc/kubernetes/admin.kubeconfig
 
 kubectl config set-credentials kubernetes-admin \
@@ -591,18 +591,18 @@ snapshot-count: 5000
 heartbeat-interval: 100
 election-timeout: 1000
 quota-backend-bytes: 0
-listen-peer-urls: 'https://192.168.2.4:2380'
-listen-client-urls: 'https://192.168.2.4:2379,http://127.0.0.1:2379'
+listen-peer-urls: 'https://192.168.2.3:2380'
+listen-client-urls: 'https://192.168.2.3:2379,http://127.0.0.1:2379'
 max-snapshots: 3
 max-wals: 5
 cors:
-initial-advertise-peer-urls: 'https://192.168.2.4:2380'
-advertise-client-urls: 'https://192.168.2.4:2379'
+initial-advertise-peer-urls: 'https://192.168.2.3:2380'
+advertise-client-urls: 'https://192.168.2.3:2379'
 discovery:
 discovery-fallback: 'proxy'
 discovery-proxy:
 discovery-srv:
-initial-cluster: 'k8s-master01=https://192.168.2.4:2380'
+initial-cluster: 'k8s-master01=https://192.168.2.3:2380'
 initial-cluster-token: 'etcd-k8s-cluster'
 initial-cluster-state: 'new'
 strict-reconfig-check: false
@@ -679,10 +679,10 @@ ExecStart=/usr/local/bin/kube-apiserver \
       --allow-privileged=true  \
       --bind-address=0.0.0.0  \
       --secure-port=6443  \
-      --advertise-address=192.168.2.4 \
+      --advertise-address=192.168.2.3 \
       --service-cluster-ip-range=10.96.0.0/12  \
       --service-node-port-range=30000-32767  \
-      --etcd-servers=https://192.168.2.4:2379 \
+      --etcd-servers=https://192.168.2.3:2379 \
       --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \
       --etcd-certfile=/etc/etcd/ssl/etcd.pem  \
       --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem  \
@@ -813,7 +813,7 @@ systemctl daemon-reload && systemctl enable --now kube-scheduler
 kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
---server=https://192.168.2.4:6443 \
+--server=https://192.168.2.3:6443 \
 --kubeconfig=/etc/kubernetes/bootstrap-kubelet.kubeconfig
 
 
@@ -1017,7 +1017,7 @@ done
 kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
---server=https://192.168.2.4:6443 \
+--server=https://192.168.2.3:6443 \
 --kubeconfig=/etc/kubernetes/kube-proxy.kubeconfig
 
 
@@ -1157,7 +1157,7 @@ wget https://docs.projectcalico.org/manifests/calico-etcd.yaml
 #### 2.修改calico配置文件
 
 ```bash
-sed -i 's#etcd_endpoints: "http://<ETCD_IP>:<ETCD_PORT>"#etcd_endpoints: "https://192.168.2.4:2379"#g' calico-etcd.yaml
+sed -i 's#etcd_endpoints: "http://<ETCD_IP>:<ETCD_PORT>"#etcd_endpoints: "https://192.168.2.3:2379"#g' calico-etcd.yaml
 
 ETCD_CA=`cat /etc/kubernetes/pki/etcd/etcd-ca.pem | base64 | tr -d '\n'`
 ETCD_CERT=`cat /etc/kubernetes/pki/etcd/etcd.pem | base64 | tr -d '\n'`
@@ -1204,7 +1204,7 @@ helm install cilium cilium/cilium  \
 --set operator.prometheus.enabled=true \
 --set ipv4NativeRoutingCIDR=172.16.0.0/12 \
 --set ipam.mode=kubernetes \
---set k8sServiceHost=192.168.2.4 \
+--set k8sServiceHost=192.168.2.3 \
 --set k8sServicePort=6443 \
 --set hubble.relay.enabled=true \
 --set hubble.ui.enabled=true
