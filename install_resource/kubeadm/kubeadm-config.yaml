@@ -1,4 +1,4 @@
-apiVersion: kubeadm.k8s.io/v1beta2
+apiVersion: kubeadm.k8s.io/v1beta3
 bootstrapTokens:
 - groups:
   - system:bootstrappers:kubeadm:default-node-token
@@ -22,13 +22,11 @@ apiServer:
   certSANs:
   - 192.168.2.3
   timeoutForControlPlane: 4m0s
-apiVersion: kubeadm.k8s.io/v1beta2
+apiVersion: kubeadm.k8s.io/v1beta3
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
 controlPlaneEndpoint: 192.168.2.3:6443
 controllerManager: {}
-dns:
-  type: CoreDNS
 etcd:
   local:
     dataDir: /var/lib/etcd
