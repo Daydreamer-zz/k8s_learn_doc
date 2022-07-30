@@ -12,7 +12,7 @@ localAPIEndpoint:
   advertiseAddress: 192.168.2.3
   bindPort: 6443
 nodeRegistration:
-  criSocket: unix:///var/run/containerd/containerd.sock
+  criSocket: unix:///var/run/crio/crio.sock
   name: k8s-master01
   taints:
   - effect: NoSchedule
