@@ -13,9 +13,6 @@ spec:
     scheme: https
     tlsConfig:
       insecureSkipVerify: true
-      caFile: /etc/prometheus/secrets/admin-ssl/ca.pem
-      certFile: /etc/prometheus/secrets/admin-ssl/admin.pem
-      keyFile: /etc/prometheus/secrets/admin-ssl/admin-key.pem
   jobLabel: app.kubernetes.io/name
   namespaceSelector:
     matchNames:
