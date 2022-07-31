@@ -1452,6 +1452,7 @@ resolvConf: /etc/resolv.conf
 rotateCertificates: true
 runtimeRequestTimeout: 2m0s
 serializeImagePulls: true
+serverTLSBootstrap: true
 staticPodPath: /etc/kubernetes/manifests
 streamingConnectionIdleTimeout: 4h0m0s
 syncFrequency: 1m0s
