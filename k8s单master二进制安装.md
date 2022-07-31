@@ -736,6 +736,8 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/kube-controller-manager \
       --v=2 \
+      --authentication-kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \
+      --authorization-kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \
       --logtostderr=true \
       --bind-address=0.0.0.0 \
       --root-ca-file=/etc/kubernetes/pki/ca.pem \
@@ -785,6 +787,8 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/kube-scheduler \
       --v=2 \
+      --authentication-kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
+      --authorization-kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
       --logtostderr=true \
       --bind-address=0.0.0.0 \
       --leader-elect=true \
