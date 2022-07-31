@@ -1353,8 +1353,6 @@ cat << \EOF > /usr/lib/systemd/system/kubelet.service
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
-After=docker.service
-Requires=docker.service
 
 [Service]
 ExecStart=/usr/local/bin/kubelet
