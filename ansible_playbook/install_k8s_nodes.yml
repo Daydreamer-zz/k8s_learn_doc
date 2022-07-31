@@ -32,7 +32,11 @@
         - { filename: "/usr/lib/systemd/system/kubelet.service", path: "/usr/lib/systemd/system/" }
         - { filename: "/etc/systemd/system/kubelet.service.d/10-kubelet.conf", path: "/etc/systemd/system/kubelet.service.d/" }
         - { filename: "/etc/kubernetes/kubelet-conf.yaml", path: "/etc/kubernetes/" }
-
+    
+    - name: daemon reload
+      systemd:
+        daemon_reload: yes
+        
     - name: 启动kubelet服务
       systemd:
         name: kubelet
