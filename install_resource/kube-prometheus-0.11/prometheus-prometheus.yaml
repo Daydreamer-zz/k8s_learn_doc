@@ -46,8 +46,6 @@ spec:
   serviceMonitorNamespaceSelector: {}
   serviceMonitorSelector: {}
   version: 2.36.1
-  secrets:
-  - admin-ssl
   storage:
     volumeClaimTemplate:
       spec:
