@@ -1,4 +1,5 @@
 apiVersion: kubeadm.k8s.io/v1beta3
+kind: InitConfiguration
 bootstrapTokens:
 - groups:
   - system:bootstrappers:kubeadm:default-node-token
@@ -7,7 +8,6 @@ bootstrapTokens:
   usages:
   - signing
   - authentication
-kind: InitConfiguration
 localAPIEndpoint:
   advertiseAddress: 192.168.2.3
   bindPort: 6443
@@ -18,11 +18,12 @@ nodeRegistration:
   - effect: NoSchedule
     key: node-role.kubernetes.io/master
 ---
+apiVersion: kubeadm.k8s.io/v1beta3
+kind: ClusterConfiguration
 apiServer:
   certSANs:
   - 192.168.2.3
   timeoutForControlPlane: 4m0s
-apiVersion: kubeadm.k8s.io/v1beta3
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
 controlPlaneEndpoint: 192.168.2.3:6443
@@ -31,7 +32,6 @@ etcd:
   local:
     dataDir: /var/lib/etcd
 imageRepository: registry.cn-hangzhou.aliyuncs.com/google_containers
-kind: ClusterConfiguration
 kubernetesVersion: v1.24.0 # 更改此处的版本号和kubeadm version一致
 networking:
   dnsDomain: cluster.local
@@ -42,3 +42,7 @@ scheduler: {}
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 serverTLSBootstrap: true
+---
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: ipvs
