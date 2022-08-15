@@ -122,6 +122,7 @@ version = 2
             NoPivotRoot = false
             Root = ""
             ShimCgroup = ""
+            # cgroup由systemd驱动
             SystemdCgroup = true
 
       [plugins."io.containerd.grpc.v1.cri".containerd.untrusted_workload_runtime]
