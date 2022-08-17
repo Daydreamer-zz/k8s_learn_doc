@@ -79,13 +79,13 @@ Ceph 把客户端数据保存为存储池内的对象。通过使用 CRUSH 算�
 ```
 [ceph-noarch]
 name=Ceph noarch packages
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/ceph/rpm-nautilus/el7/noarch
+baseurl=http://mirrors.ustc.edu.cn/ceph/rpm-nautilus/el7/noarch
 enabled=1
 gpgcheck=0
 
 [ceph-x86_64]
 name=Ceph x86_64 packages
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/ceph/rpm-nautilus/el7/x86_64
+baseurl=http://mirrors.ustc.edu.cn/ceph/rpm-nautilus/el7/x86_64
 enabled=1
 gpgcheck=0
 ```
@@ -158,9 +158,9 @@ ceph-deploy mgr create ceph-node01
 **只在ceph-node01节点操作**
 
 ```bash
-ceph-deploy osd create ceph-node01 --data /dev/sdb
-ceph-deploy osd create ceph-node02 --data /dev/sdb
-ceph-deploy osd create ceph-node03 --data /dev/sdb
+ceph-deploy osd create ceph-node01 --data /dev/vdb
+ceph-deploy osd create ceph-node02 --data /dev/vdb
+ceph-deploy osd create ceph-node03 --data /dev/vdb
 ```
 
 ### 5.7 查看集群状态
