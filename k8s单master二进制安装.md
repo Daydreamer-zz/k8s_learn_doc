@@ -1142,7 +1142,7 @@ kubectl label nodes k8s-node01 k8s-node02 node-role.kubernetes.io/node=
 配置master节点不接受负载
 
 ```bash
-kubectl taint node k8s-master01 master=true:NoSchedule
+kubectl taint node k8s-master01 node-role.kubernetes.io/master:NoSchedule
 ```
 
 ## 七、安装CNI插件
