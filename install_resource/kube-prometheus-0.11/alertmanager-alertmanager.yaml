@@ -10,7 +10,7 @@ metadata:
   name: main
   namespace: monitoring
 spec:
-  image: quay.io/prometheus/alertmanager:v0.24.0
+  image: registry.cn-qingdao.aliyuncs.com/zz_google_containers/alertmanager:v0.24.0
   nodeSelector:
     kubernetes.io/os: linux
   podMetadata:
