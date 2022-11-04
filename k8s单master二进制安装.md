@@ -21,28 +21,28 @@ CentOS-Base.repo
 cat << EOF > /etc/yum.repos.d/CentOS-Base.repo
 [base]
 name=CentOS-\$releasever - Base
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/centos/\$releasever/os/\$basearch/
+baseurl=http://mirrors.ustc.edu.cn/centos/\$releasever/os/\$basearch/
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 
 #released updates 
 [updates]
 name=CentOS-\$releasever - Updates
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/centos/\$releasever/updates/\$basearch/
+baseurl=http://mirrors.ustc.edu.cn/centos/\$releasever/updates/\$basearch/
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 
 #additional packages that may be useful
 [extras]
 name=CentOS-\$releasever - Extras
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/centos/\$releasever/extras/\$basearch/
+baseurl=http://mirrors.ustc.edu.cn/centos/\$releasever/extras/\$basearch/
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 
 #additional packages that extend functionality of existing packages
 [centosplus]
 name=CentOS-\$releasever - Plus
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/centos/\$releasever/centosplus/\$basearch/
+baseurl=http://mirrors.ustc.edu.cn/centos/\$releasever/centosplus/\$basearch/
 gpgcheck=1
 enabled=0
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
@@ -55,7 +55,7 @@ epel.repo
 cat << EOF > /etc/yum.repos.d/epel.repo
 [epel]
 name=Extra Packages for Enterprise Linux 7 - \$basearch
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/epel/7/\$basearch
+baseurl=http://mirrors.ustc.edu.cn/epel/7/\$basearch
 failovermethod=priority
 enabled=1
 gpgcheck=0
@@ -68,10 +68,10 @@ docker-ce.repo
 cat << EOF > /etc/yum.repos.d/docker-ce.repo
 [docker-ce-stable]
 name=Docker CE Stable - \$basearch
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/centos/\$releasever/\$basearch/stable
+baseurl=http://mirrors.ustc.edu.cn/docker-ce/linux/centos/\$releasever/\$basearch/stable
 enabled=1
 gpgcheck=1
-gpgkey=https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/centos/gpg
+gpgkey=http://mirrors.ustc.edu.cn/docker-ce/linux/centos/gpg
 EOF
 ```
 
