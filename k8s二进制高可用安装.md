@@ -1645,37 +1645,47 @@ kubectl taint node k8s-master01 k8s-master02 k8s-master03 node-role.kubernetes.i
 
 ### 1.下载calico资源文件
 
+datasource为etcd
+
 ```bash
-wget https://docs.projectcalico.org/manifests/calico-etcd.yaml
+wget https://docs.projectcalico.org/manifests/calico-etcd.yaml -O calico.yaml
 ```
+
+datasource为kubernetes
+
+```bash
+wget https://docs.projectcalico.org/manifests/calico.yaml -O calico.yaml
+```
+
+
 
 ### 2.修改calico配置文件
 
 ```bash
-sed -i 's#etcd_endpoints: "http://<ETCD_IP>:<ETCD_PORT>"#etcd_endpoints: "https://192.168.2.4:2379,https://192.168.2.5:2379,https://192.168.2.6:2379"#g' calico-etcd.yaml
+sed -i 's#etcd_endpoints: "http://<ETCD_IP>:<ETCD_PORT>"#etcd_endpoints: "https://192.168.2.4:2379,https://192.168.2.5:2379,https://192.168.2.6:2379"#g' calico.yaml
 
 ETCD_CA=`cat /etc/kubernetes/pki/etcd/etcd-ca.pem | base64 | tr -d '\n'`
 ETCD_CERT=`cat /etc/kubernetes/pki/etcd/etcd.pem | base64 | tr -d '\n'`
 ETCD_KEY=`cat /etc/kubernetes/pki/etcd/etcd-key.pem | base64 | tr -d '\n'`
 
-sed -i "s@# etcd-key: null@etcd-key: ${ETCD_KEY}@g; s@# etcd-cert: null@etcd-cert: ${ETCD_CERT}@g; s@# etcd-ca: null@etcd-ca: ${ETCD_CA}@g" calico-etcd.yaml
+sed -i "s@# etcd-key: null@etcd-key: ${ETCD_KEY}@g; s@# etcd-cert: null@etcd-cert: ${ETCD_CERT}@g; s@# etcd-ca: null@etcd-ca: ${ETCD_CA}@g" calico.yaml
 
 
-sed -i 's#etcd_ca: ""#etcd_ca: "/calico-secrets/etcd-ca"#g; s#etcd_cert: ""#etcd_cert: "/calico-secrets/etcd-cert"#g; s#etcd_key: "" #etcd_key: "/calico-secrets/etcd-key" #g' calico-etcd.yaml
+sed -i 's#etcd_ca: ""#etcd_ca: "/calico-secrets/etcd-ca"#g; s#etcd_cert: ""#etcd_cert: "/calico-secrets/etcd-cert"#g; s#etcd_key: "" #etcd_key: "/calico-secrets/etcd-key" #g' calico.yaml
 
 # 更改此处为自己的pod网段
 POD_SUBNET="172.16.0.0/12"
 
-sed -i 's@# - name: CALICO_IPV4POOL_CIDR@- name: CALICO_IPV4POOL_CIDR@g; s@#   value: "192.168.0.0/16"@  value: '"${POD_SUBNET}"'@g' calico-etcd.yaml
+sed -i 's@# - name: CALICO_IPV4POOL_CIDR@- name: CALICO_IPV4POOL_CIDR@g; s@#   value: "192.168.0.0/16"@  value: '"${POD_SUBNET}"'@g' calico.yaml
 
 #关闭IPIP模式，如网络环境不是二层互联的可以不操作此步
-sed -i 's#value: "Always"#value: "Never"#g' calico-etcd.yaml
+sed -i 's#value: "Always"#value: "Never"#g' calico.yaml
 ```
 
 ### 3.安装calico
 
 ```bash
-kubectl apply -f calico-etcd.yaml
+kubectl apply -f calico.yaml
 ```
 
 ## 八、安装coredns
