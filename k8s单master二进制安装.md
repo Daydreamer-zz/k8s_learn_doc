@@ -1164,7 +1164,7 @@ wget https://docs.projectcalico.org/manifests/calico-etcd.yaml -O calico.yaml
 datasource为kubernetes
 
 ```bash
-wget https://docs.projectcalico.org/manifests/calico-etcd.yaml -O calico.yaml
+wget https://docs.projectcalico.org/manifests/calico.yaml -O calico.yaml
 ```
 
 #### 2.修改calico配置文件
