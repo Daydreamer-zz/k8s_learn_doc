@@ -298,7 +298,7 @@ mkdir -p /etc/docker
 cat << EOF > /etc/docker/daemon.json
 {
   "registry-mirrors": [
-    "https://kc95fq7u.mirror.aliyuncs.com"
+    "https://hub-mirror.c.163.com"
   ],
   "exec-opts": [
     "native.cgroupdriver=systemd"
