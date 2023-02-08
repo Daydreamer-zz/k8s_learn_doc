@@ -1648,13 +1648,13 @@ kubectl taint node k8s-master01 k8s-master02 k8s-master03 node-role.kubernetes.i
 datasource为etcd
 
 ```bash
-wget https://docs.projectcalico.org/manifests/calico-etcd.yaml -O calico.yaml
+wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico-etcd.yaml -O calico.yaml
 ```
 
 datasource为kubernetes
 
 ```bash
-wget https://docs.projectcalico.org/manifests/calico.yaml -O calico.yaml
+wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml -O calico.yaml
 ```
 
 
