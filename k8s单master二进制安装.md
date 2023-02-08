@@ -1158,13 +1158,13 @@ kubectl taint node k8s-master01 node-role.kubernetes.io/master:NoSchedule
 datasource为etcd
 
 ```bash
-wget https://github.com/projectcalico/calico/raw/master/manifests/calico-etcd.yaml -O calico.yaml
+wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico-etcd.yaml -O calico.yaml
 ```
 
 datasource为kubernetes
 
 ```bash
-wget https://github.com/projectcalico/calico/raw/master/manifests/calico.yaml -O calico.yaml
+wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml -O calico.yaml
 ```
 
 #### 2.修改calico配置文件
