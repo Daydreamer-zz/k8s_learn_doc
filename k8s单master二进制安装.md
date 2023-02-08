@@ -1,6 +1,6 @@
 # 单master k8s
 
-这里的master节点ip为`192.168.2.3`，pod网段为`172.16.0.0/12`，service网段为`10.96.0.0/12`，kube-dns地址为`10.96.0.10`，您可以直接批量替这些ip以适应您的网络环境。
+这里的master节点ip为`192.168.2.3`，pod网段为`172.16.0.0/16`，service网段为`10.96.0.0/16`，kube-dns地址为`10.96.0.10`，calico版本为v3.25.0，您可以直接批量替这些ip以适应您的网络环境。
 
 ## 一、基础环境配置
 
@@ -680,7 +680,7 @@ ExecStart=/usr/local/bin/kube-apiserver \
       --bind-address=0.0.0.0  \
       --secure-port=6443  \
       --advertise-address=192.168.2.3 \
-      --service-cluster-ip-range=10.96.0.0/12  \
+      --service-cluster-ip-range=10.96.0.0/16  \
       --service-node-port-range=30000-32767  \
       --etcd-servers=https://192.168.2.3:2379 \
       --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \
@@ -752,7 +752,7 @@ ExecStart=/usr/local/bin/kube-controller-manager \
       --pod-eviction-timeout=2m0s \
       --controllers=*,bootstrapsigner,tokencleaner \
       --allocate-node-cidrs=true \
-      --cluster-cidr=172.16.0.0/12 \
+      --cluster-cidr=172.16.0.0/16 \
       --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.pem \
       --node-cidr-mask-size=24 \
       --cluster-signing-duration=876000h0m0s \
@@ -1075,7 +1075,7 @@ clientConnection:
   contentType: application/vnd.kubernetes.protobuf
   kubeconfig: /etc/kubernetes/kube-proxy.kubeconfig
   qps: 5
-clusterCIDR: 172.16.0.0/12
+clusterCIDR: 172.16.0.0/16
 configSyncPeriod: 15m0s
 conntrack:
   max: null
@@ -1158,16 +1158,18 @@ kubectl taint node k8s-master01 node-role.kubernetes.io/master:NoSchedule
 datasource为etcd
 
 ```bash
-wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico-etcd.yaml -O calico.yaml
+wget https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico-etcd.yaml -O calico.yaml
 ```
 
 datasource为kubernetes
 
 ```bash
-wget https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml -O calico.yaml
+wget https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml -O calico.yaml
 ```
 
 #### 2.修改calico配置文件
+
+datasource为etcd
 
 ```bash
 sed -i 's#etcd_endpoints: "http://<ETCD_IP>:<ETCD_PORT>"#etcd_endpoints: "https://192.168.2.3:2379"#g' calico.yaml
@@ -1182,7 +1184,19 @@ sed -i "s@# etcd-key: null@etcd-key: ${ETCD_KEY}@g; s@# etcd-cert: null@etcd-cer
 sed -i 's#etcd_ca: ""#etcd_ca: "/calico-secrets/etcd-ca"#g; s#etcd_cert: ""#etcd_cert: "/calico-secrets/etcd-cert"#g; s#etcd_key: "" #etcd_key: "/calico-secrets/etcd-key" #g' calico.yaml
 
 # 更改此处为自己的pod网段
-POD_SUBNET="172.16.0.0/12"
+POD_SUBNET="172.16.0.0/16"
+
+sed -i 's@# - name: CALICO_IPV4POOL_CIDR@- name: CALICO_IPV4POOL_CIDR@g; s@#   value: "192.168.0.0/16"@  value: '"${POD_SUBNET}"'@g' calico.yaml
+
+#关闭IPIP模式，如网络环境不是二层互联的可以不操作此步
+sed -i 's#value: "Always"#value: "Never"#g' calico.yaml
+```
+
+datasource为kubernetes
+
+```bash
+# 更改此处为自己的pod网段
+POD_SUBNET="172.16.0.0/16"
 
 sed -i 's@# - name: CALICO_IPV4POOL_CIDR@- name: CALICO_IPV4POOL_CIDR@g; s@#   value: "192.168.0.0/16"@  value: '"${POD_SUBNET}"'@g' calico.yaml
 
@@ -1215,7 +1229,7 @@ helm install cilium cilium/cilium  \
 --set loadBalancer.mode=hybrid \
 --set prometheus.enabled=true \
 --set operator.prometheus.enabled=true \
---set ipv4NativeRoutingCIDR=172.16.0.0/12 \
+--set ipv4NativeRoutingCIDR=172.16.0.0/16 \
 --set ipam.mode=kubernetes \
 --set k8sServiceHost=192.168.2.3 \
 --set k8sServicePort=6443 \
