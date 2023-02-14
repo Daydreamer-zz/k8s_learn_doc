@@ -100,7 +100,6 @@ yum install wget jq psmisc vim net-tools telnet yum-utils device-mapper-persiste
 ```bash
 sed -i 's#SELINUX=enforcing#SELINUX=disabled#g' /etc/selinux/config
 systemctl disable firewalld --now
-systemctl disable NetworkManager --now
 chmod +x /etc/rc.d/rc.local
 systemctl list-unit-files|egrep "^ab|^aud|^kdump|vm|^md|^mic|^post|lvm"  |awk '{print $1}'|sed -r 's#(.*)#systemctl disable &#g'|bash
 echo 'export HISTTIMEFORMAT="%Y-%m-%d %H:%M:%S  "' >> /etc/profile
@@ -1047,7 +1046,6 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/kube-apiserver \
       --v=2  \
-      --logtostderr=true  \
       --allow-privileged=true  \
       --bind-address=0.0.0.0  \
       --secure-port=6443  \
@@ -1100,7 +1098,6 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/kube-apiserver \
       --v=2  \
-      --logtostderr=true  \
       --allow-privileged=true  \
       --bind-address=0.0.0.0  \
       --secure-port=6443  \
@@ -1153,7 +1150,6 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/kube-apiserver \
       --v=2  \
-      --logtostderr=true  \
       --allow-privileged=true  \
       --bind-address=0.0.0.0  \
       --secure-port=6443  \
@@ -1218,7 +1214,6 @@ ExecStart=/usr/local/bin/kube-controller-manager \
       --v=2 \
       --authentication-kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \
       --authorization-kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \
-      --logtostderr=true \
       --bind-address=0.0.0.0  \
       --root-ca-file=/etc/kubernetes/pki/ca.pem \
       --cluster-signing-cert-file=/etc/kubernetes/pki/ca.pem \
@@ -1270,7 +1265,6 @@ ExecStart=/usr/local/bin/kube-scheduler \
       --v=2 \
       --authentication-kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
       --authorization-kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
-      --logtostderr=true \
       --bind-address=0.0.0.0  \
       --leader-elect=true \
       --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
