@@ -8,7 +8,7 @@ K8S_APISERVER_PORT=6443
 CERT_CONFIG_DIR=/root/k8s_learn_doc/install_resource/k8s_pki_config
 
 config_dir(){
-	mkdir -p /etc/kubernetes/pki/etcd  /root/.kube /etc/kubernetes/pki /etc/kubernetes/manifests/ /etc/systemd/system/kubelet.service.d  /var/lib/kubelet /var/log/kubernetes /opt/cni/bin
+	mkdir -p /etc/etcd /etc/kubernetes/pki/etcd  /root/.kube /etc/kubernetes/pki /etc/kubernetes/manifests/ /etc/systemd/system/kubelet.service.d  /var/lib/kubelet /var/log/kubernetes /opt/cni/bin
 }
 
 etcd_cert(){
