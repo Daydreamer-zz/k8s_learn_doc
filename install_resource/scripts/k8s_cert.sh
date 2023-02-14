@@ -21,8 +21,6 @@ etcd_cert(){
 		-hostname=127.0.0.1,${K8S_MASTER_HOSTNAME},${K8S_MASTER_IP} \
 		-profile=kubernetes \
 		${CERT_CONFIG_DIR}/etcd-csr.json | cfssljson -bare /etc/kubernetes/pki/etcd/etcd;
-
-	ln -s /etc/kubernetes/pki/etcd/* /etc/kubernetes/pki/etcd/
 }
 
 k8s_cert(){
