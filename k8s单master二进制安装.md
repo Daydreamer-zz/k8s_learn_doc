@@ -339,7 +339,7 @@ chmod +x /usr/local/bin/cfssl /usr/local/bin/cfssljson /usr/local/bin/cfssl-cert
 master节点
 
 ```bash
-mkdir -p /etc/etcd/ssl /etc/kubernetes/pki/etcd  /root/.kube 
+mkdir -p /etc/kubernetes/pki/etcd  /root/.kube 
 ```
 
 所有节点(master和node)
@@ -359,24 +359,24 @@ cd k8s_learn_doc/install_resource/k8s_pki_config
 #### 3.1 etcd CA证书
 
 ```bash
-cfssl gencert -initca etcd-ca-csr.json | cfssljson -bare /etc/etcd/ssl/etcd-ca
+cfssl gencert -initca etcd-ca-csr.json | cfssljson -bare /etc/kubernetes/pki/etcd/etcd-ca
 ```
 #### 3.2 etcd证书
 
 ```bash
 cfssl gencert \
--ca=/etc/etcd/ssl/etcd-ca.pem \
--ca-key=/etc/etcd/ssl/etcd-ca-key.pem \
+-ca=/etc/kubernetes/pki/etcd/etcd-ca.pem \
+-ca-key=/etc/kubernetes/pki/etcd/etcd-ca-key.pem \
 -config=ca-config.json \
 -hostname=127.0.0.1,k8s-master01,192.168.2.3 \
 -profile=kubernetes \
-etcd-csr.json | cfssljson -bare /etc/etcd/ssl/etcd
+etcd-csr.json | cfssljson -bare /etc/kubernetes/pki/etcd/etcd
 ```
 
 #### 3.3 软链接
 
 ```bash
-ln -s /etc/etcd/ssl/* /etc/kubernetes/pki/etcd/
+ln -s /etc/kubernetes/pki/etcd/* /etc/kubernetes/pki/etcd/
 ```
 
 ### 4.kubernetes
@@ -681,9 +681,9 @@ ExecStart=/usr/local/bin/kube-apiserver \
       --service-cluster-ip-range=10.96.0.0/16  \
       --service-node-port-range=30000-32767  \
       --etcd-servers=https://192.168.2.3:2379 \
-      --etcd-cafile=/etc/etcd/ssl/etcd-ca.pem  \
-      --etcd-certfile=/etc/etcd/ssl/etcd.pem  \
-      --etcd-keyfile=/etc/etcd/ssl/etcd-key.pem  \
+      --etcd-cafile=/etc/kubernetes/pki/etcd/etcd-ca.pem  \
+      --etcd-certfile=/etc/kubernetes/pki/etcd/etcd.pem  \
+      --etcd-keyfile=/etc/kubernetes/pki/etcd/etcd-key.pem  \
       --client-ca-file=/etc/kubernetes/pki/ca.pem  \
       --tls-cert-file=/etc/kubernetes/pki/apiserver.pem  \
       --tls-private-key-file=/etc/kubernetes/pki/apiserver-key.pem  \
