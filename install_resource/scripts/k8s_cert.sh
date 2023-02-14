@@ -1,28 +1,28 @@
 #!/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
 K8S_MASTER_HOSTNAME=k8s-master01
-K8S_MASTER_IP=192.168.2.4
-K8S_MASTER_VIP=192.168.2.4
+K8S_MASTER_IP=192.168.10.3
+K8S_MASTER_VIP=192.168.10.3
 K8S_SERVICE_IP=10.96.0.1
 K8S_APISERVER_PORT=6443
 CERT_CONFIG_DIR=/root/k8s_learn_doc/install_resource/k8s_pki_config
 
 config_dir(){
-	mkdir -p /etc/etcd/ssl /etc/kubernetes/pki/etcd  /root/.kube /etc/kubernetes/pki /etc/kubernetes/manifests/ /etc/systemd/system/kubelet.service.d  /var/lib/kubelet /var/log/kubernetes /opt/cni/bin
+	mkdir -p /etc/kubernetes/pki/etcd  /root/.kube /etc/kubernetes/pki /etc/kubernetes/manifests/ /etc/systemd/system/kubelet.service.d  /var/lib/kubelet /var/log/kubernetes /opt/cni/bin
 }
 
 etcd_cert(){
-	cfssl gencert -initca ${CERT_CONFIG_DIR}/etcd-ca-csr.json | cfssljson -bare /etc/etcd/ssl/etcd-ca;
+	cfssl gencert -initca ${CERT_CONFIG_DIR}/etcd-ca-csr.json | cfssljson -bare /etc/kubernetes/pki/etcd/etcd-ca;
 
 	cfssl gencert \
-		-ca=/etc/etcd/ssl/etcd-ca.pem \
-		-ca-key=/etc/etcd/ssl/etcd-ca-key.pem \
+		-ca=/etc/kubernetes/pki/etcd/etcd-ca.pem \
+		-ca-key=/etc/kubernetes/pki/etcd/etcd-ca-key.pem \
 		-config=${CERT_CONFIG_DIR}/ca-config.json \
 		-hostname=127.0.0.1,${K8S_MASTER_HOSTNAME},${K8S_MASTER_IP} \
 		-profile=kubernetes \
-		${CERT_CONFIG_DIR}/etcd-csr.json | cfssljson -bare /etc/etcd/ssl/etcd;
+		${CERT_CONFIG_DIR}/etcd-csr.json | cfssljson -bare /etc/kubernetes/pki/etcd/etcd;
 
-	ln -s /etc/etcd/ssl/* /etc/kubernetes/pki/etcd/
+	ln -s /etc/kubernetes/pki/etcd/* /etc/kubernetes/pki/etcd/
 }
 
 k8s_cert(){
