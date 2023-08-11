@@ -794,7 +794,7 @@ EOF
 所有master节点配置一样
 
 ```bash
-cat << \EOF > /usr/lib/systemd/system/etcd.service
+cat << \EOF > /etc/systemd/system/etcd.service
 [Unit]
 Description=Etcd Service
 Documentation=https://coreos.com/etcd/docs/latest/
@@ -1037,7 +1037,7 @@ systemctl enable haproxy keepalived --now
 k8s-master01
 
 ```bash
-cat << \EOF > /usr/lib/systemd/system/kube-apiserver.service
+cat << \EOF > /etc/systemd/system/kube-apiserver.service
 [Unit]
 Description=Kubernetes API Server
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1089,7 +1089,7 @@ EOF
 k8s-master02
 
 ```bash
-cat << \EOF > /usr/lib/systemd/system/kube-apiserver.service
+cat << \EOF > /etc/systemd/system/kube-apiserver.service
 [Unit]
 Description=Kubernetes API Server
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1141,7 +1141,7 @@ EOF
 k8s-master03
 
 ```bash
-cat << \EOF > /usr/lib/systemd/system/kube-apiserver.service
+cat << \EOF > /etc/systemd/system/kube-apiserver.service
 [Unit]
 Description=Kubernetes API Server
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1203,7 +1203,7 @@ systemctl daemon-reload && systemctl enable --now kube-apiserver
 所有master节点都一样
 
 ```bash
-cat << \EOF >  /usr/lib/systemd/system/kube-controller-manager.service
+cat << \EOF >  /etc/systemd/system/kube-controller-manager.service
 [Unit]
 Description=Kubernetes Controller Manager
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1254,7 +1254,7 @@ systemctl daemon-reload && systemctl enable --now kube-controller-manager
 所有master节点都一样
 
 ```bash
-cat << \EOF > /usr/lib/systemd/system/kube-scheduler.service
+cat << \EOF > /etc/systemd/system/kube-scheduler.service
 [Unit]
 Description=Kubernetes Scheduler
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1347,7 +1347,7 @@ done
 #### 1.2生成kubelet systemd启动脚本
 
 ```bash
-cat << \EOF > /usr/lib/systemd/system/kubelet.service
+cat << \EOF > /etc/systemd/system/kubelet.service
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1485,7 +1485,7 @@ for NODE in $WorkNodes; do
      for FILE in pki/ca.pem pki/ca-key.pem pki/front-proxy-ca.pem bootstrap-kubelet.conf; do
        scp /etc/kubernetes/$FILE $NODE:/etc/kubernetes/${FILE}
      done
-     scp /usr/lib/systemd/system/kubelet.service $NODE:/usr/lib/systemd/system/
+     scp /etc/systemd/system/kubelet.service $NODE:/etc/systemd/system/
      scp /etc/systemd/system/kubelet.service.d/10-kubelet.conf $NODE:/etc/systemd/system/kubelet.service.d/
      scp /var/lib/kubelet/config.yaml $NODE:/var/lib/kubelet/
      ssh $NODE "systemctl daemon-reload && systemctl enable --now kubelet" 
@@ -1493,7 +1493,7 @@ done
 
 for NODE in $MasterNodes; do
     scp /etc/kubernetes/bootstrap-kubelet.conf $NODE:/etc/kubernetes/
-    scp /usr/lib/systemd/system/kubelet.service $NODE:/usr/lib/systemd/system/
+    scp /etc/systemd/system/kubelet.service $NODE:/etc/systemd/system/
     scp /etc/systemd/system/kubelet.service.d/10-kubelet.conf $NODE:/etc/systemd/system/kubelet.service.d/
     scp /var/lib/kubelet/config.yaml $NODE:/var/lib/kubelet/
     ssh $NODE "systemctl daemon-reload && systemctl enable --now kubelet"
@@ -1530,7 +1530,7 @@ kubectl config use-context system:kube-proxy@kubernetes \
 #### 2.2 生成kube-proxy systemd启动脚本
 
 ```bash
-cat << \EOF > /usr/lib/systemd/system/kube-proxy.service
+cat << \EOF > /etc/systemd/system/kube-proxy.service
 [Unit]
 Description=Kubernetes Kube Proxy
 Documentation=https://github.com/kubernetes/kubernetes
@@ -1607,7 +1607,7 @@ WorkNodes='k8s-master02 k8s-master03 k8s-node01 k8s-node02'
 
 for NODE in $WorkNodes; do
      scp /etc/kubernetes/kube-proxy.kubeconfig $NODE:/etc/kubernetes/kube-proxy.kubeconfig
-     scp /usr/lib/systemd/system/kube-proxy.service $NODE:/usr/lib/systemd/system/
+     scp /etc/systemd/system/kube-proxy.service $NODE:/etc/systemd/system/
      scp /etc/kubernetes/kube-proxy-conf.yaml $NODE:/etc/kubernetes/
      ssh $NODE "systemctl daemon-reload && systemctl enable --now kube-proxy"
 done
