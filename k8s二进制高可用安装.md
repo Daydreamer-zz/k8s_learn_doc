@@ -527,24 +527,24 @@ kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
 --server=https://192.168.2.24:8443 \
---kubeconfig=/etc/kubernetes/controller-manager.kubeconfig
+--kubeconfig=/etc/kubernetes/controller-manager.conf
 
 #设置一个环境项，一个上下文
 kubectl config set-context system:kube-controller-manager@kubernetes \
 --cluster=kubernetes \
 --user=system:kube-controller-manager \
---kubeconfig=/etc/kubernetes/controller-manager.kubeconfig
+--kubeconfig=/etc/kubernetes/controller-manager.conf
 
 #设置一个用户项
 kubectl config set-credentials system:kube-controller-manager \
 --client-certificate=/etc/kubernetes/pki/controller-manager.pem \
 --client-key=/etc/kubernetes/pki/controller-manager-key.pem \
 --embed-certs=true \
---kubeconfig=/etc/kubernetes/controller-manager.kubeconfig
+--kubeconfig=/etc/kubernetes/controller-manager.conf
 
 #使用某个环境当做默认环境
 kubectl config use-context system:kube-controller-manager@kubernetes \
---kubeconfig=/etc/kubernetes/controller-manager.kubeconfig
+--kubeconfig=/etc/kubernetes/controller-manager.conf
 ```
 
 ### 3.kube-scheduler
@@ -554,22 +554,22 @@ kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
 --server=https://192.168.2.24:8443 \
---kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+--kubeconfig=/etc/kubernetes/scheduler.conf
 
 
 kubectl config set-context system:kube-scheduler@kubernetes \
 --cluster=kubernetes \
 --user=system:kube-scheduler \
---kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+--kubeconfig=/etc/kubernetes/scheduler.conf
 
 kubectl config set-credentials system:kube-scheduler \
 --client-certificate=/etc/kubernetes/pki/scheduler.pem \
 --client-key=/etc/kubernetes/pki/scheduler-key.pem \
 --embed-certs=true \
---kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+--kubeconfig=/etc/kubernetes/scheduler.conf
 
 kubectl config use-context system:kube-scheduler@kubernetes \
---kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+--kubeconfig=/etc/kubernetes/scheduler.conf
 ```
 
 ### 4.admin
@@ -579,22 +579,22 @@ kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
 --server=https://192.168.2.24:8443 \
---kubeconfig=/etc/kubernetes/admin.kubeconfig
+--kubeconfig=/etc/kubernetes/admin.conf
 
 kubectl config set-credentials kubernetes-admin \
 --client-certificate=/etc/kubernetes/pki/admin.pem \
 --client-key=/etc/kubernetes/pki/admin-key.pem \
 --embed-certs=true \
---kubeconfig=/etc/kubernetes/admin.kubeconfig
+--kubeconfig=/etc/kubernetes/admin.conf
 
 
 kubectl config set-context kubernetes-admin@kubernetes \
 --cluster=kubernetes \
 --user=kubernetes-admin \
---kubeconfig=/etc/kubernetes/admin.kubeconfig
+--kubeconfig=/etc/kubernetes/admin.conf
 
 kubectl config use-context kubernetes-admin@kubernetes \
---kubeconfig=/etc/kubernetes/admin.kubeconfig
+--kubeconfig=/etc/kubernetes/admin.conf
 ```
 
 ### 5.发送所有证书和配置文件到其他master节点
@@ -609,7 +609,7 @@ do
         scp /etc/kubernetes/pki/${FILE} $NODE:/etc/kubernetes/pki/${FILE}
     done
     
-    for FILE in admin.kubeconfig controller-manager.kubeconfig scheduler.kubeconfig;
+    for FILE in admin.conf controller-manager.conf scheduler.conf;
     do
         scp /etc/kubernetes/${FILE} $NODE:/etc/kubernetes/${FILE}
     done
@@ -1212,14 +1212,14 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/kube-controller-manager \
       --v=2 \
-      --authentication-kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \
-      --authorization-kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \
+      --authentication-kubeconfig=/etc/kubernetes/controller-manager.conf \
+      --authorization-kubeconfig=/etc/kubernetes/controller-manager.conf \
       --bind-address=0.0.0.0  \
       --root-ca-file=/etc/kubernetes/pki/ca.pem \
       --cluster-signing-cert-file=/etc/kubernetes/pki/ca.pem \
       --cluster-signing-key-file=/etc/kubernetes/pki/ca-key.pem \
       --service-account-private-key-file=/etc/kubernetes/pki/sa.key \
-      --kubeconfig=/etc/kubernetes/controller-manager.kubeconfig \
+      --kubeconfig=/etc/kubernetes/controller-manager.conf \
       --leader-elect=true \
       --use-service-account-credentials=true \
       --node-monitor-grace-period=40s \
@@ -1263,11 +1263,11 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/kube-scheduler \
       --v=2 \
-      --authentication-kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
-      --authorization-kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
+      --authentication-kubeconfig=/etc/kubernetes/scheduler.conf \
+      --authorization-kubeconfig=/etc/kubernetes/scheduler.conf \
       --bind-address=0.0.0.0  \
       --leader-elect=true \
-      --kubeconfig=/etc/kubernetes/scheduler.kubeconfig \
+      --kubeconfig=/etc/kubernetes/scheduler.conf \
       --client-ca-file=/etc/kubernetes/pki/ca.pem
 
 Restart=always
@@ -1288,35 +1288,35 @@ systemctl daemon-reload && systemctl enable --now kube-scheduler
 
 只在一个master节点操作
 
-#### 6.1生成bootstrap-kubelet.kubeconfig
+#### 6.1生成bootstrap-kubelet.conf
 
 ```bash
 kubectl config set-cluster kubernetes \
 --certificate-authority=/etc/kubernetes/pki/ca.pem \
 --embed-certs=true \
 --server=https://192.168.2.24:8443 \
---kubeconfig=/etc/kubernetes/bootstrap-kubelet.kubeconfig
+--kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf
 
 
 kubectl config set-credentials tls-bootstrap-token-user \
 --token=c8ad9c.2e4d610cf3e7426e \
---kubeconfig=/etc/kubernetes/bootstrap-kubelet.kubeconfig
+--kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf
 
 
 kubectl config set-context tls-bootstrap-token-user@kubernetes \
 --cluster=kubernetes \
 --user=tls-bootstrap-token-user \
---kubeconfig=/etc/kubernetes/bootstrap-kubelet.kubeconfig
+--kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf
 
 
 kubectl config use-context tls-bootstrap-token-user@kubernetes \
---kubeconfig=/etc/kubernetes/bootstrap-kubelet.kubeconfig
+--kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf
 ```
 
 #### 6.2 复制kube admin配置文件到指定位置
 
 ```bash
-mkdir -p /root/.kube && cp /etc/kubernetes/admin.kubeconfig /root/.kube/config
+mkdir -p /root/.kube && cp /etc/kubernetes/admin.conf /root/.kube/config
 ```
 
 #### 6.3 生成kubernets bootstrap相关系统资源
@@ -1367,9 +1367,9 @@ EOF
 ```bash
 cat << \EOF > /etc/systemd/system/kubelet.service.d/10-kubelet.conf
 [Service]
-Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.kubeconfig --kubeconfig=/etc/kubernetes/kubelet.kubeconfig"
-Environment="KUBELET_SYSTEM_ARGS=--container-runtime=remote --runtime-request-timeout=15m --container-runtime-endpoint=unix:///run/containerd/containerd.sock"
-Environment="KUBELET_CONFIG_ARGS=--config=/etc/kubernetes/kubelet-conf.yaml"
+Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf"
+Environment="KUBELET_SYSTEM_ARGS=--container-runtime=remote --container-runtime-endpoint=unix:///run/containerd/containerd.sock"
+Environment="KUBELET_CONFIG_ARGS=--config=/var/lib/kubelet/config.yaml"
 Environment="KUBELET_EXTRA_ARGS=--node-labels=node.kubernetes.io/node='' "
 ExecStart=
 ExecStart=/usr/local/bin/kubelet $KUBELET_KUBECONFIG_ARGS $KUBELET_CONFIG_ARGS $KUBELET_SYSTEM_ARGS $KUBELET_EXTRA_ARGS
@@ -1379,7 +1379,7 @@ EOF
 #### 1.3 生成kubelet的配置文件
 
 ```bash
-cat << EOF > /etc/kubernetes/kubelet-conf.yaml
+cat << EOF > /var/lib/kubelet/config.yaml
 apiVersion: kubelet.config.k8s.io/v1beta1
 kind: KubeletConfiguration
 address: 0.0.0.0
@@ -1482,20 +1482,20 @@ MasterNodes='k8s-master02 k8s-master03'
 cd /etc/kubernetes/
 
 for NODE in $WorkNodes; do
-     for FILE in pki/ca.pem pki/ca-key.pem pki/front-proxy-ca.pem bootstrap-kubelet.kubeconfig; do
+     for FILE in pki/ca.pem pki/ca-key.pem pki/front-proxy-ca.pem bootstrap-kubelet.conf; do
        scp /etc/kubernetes/$FILE $NODE:/etc/kubernetes/${FILE}
      done
      scp /usr/lib/systemd/system/kubelet.service $NODE:/usr/lib/systemd/system/
      scp /etc/systemd/system/kubelet.service.d/10-kubelet.conf $NODE:/etc/systemd/system/kubelet.service.d/
-     scp /etc/kubernetes/kubelet-conf.yaml $NODE:/etc/kubernetes/
+     scp /var/lib/kubelet/config.yaml $NODE:/var/lib/kubelet/
      ssh $NODE "systemctl daemon-reload && systemctl enable --now kubelet" 
 done
 
 for NODE in $MasterNodes; do
-    scp /etc/kubernetes/bootstrap-kubelet.kubeconfig $NODE:/etc/kubernetes/
+    scp /etc/kubernetes/bootstrap-kubelet.conf $NODE:/etc/kubernetes/
     scp /usr/lib/systemd/system/kubelet.service $NODE:/usr/lib/systemd/system/
     scp /etc/systemd/system/kubelet.service.d/10-kubelet.conf $NODE:/etc/systemd/system/kubelet.service.d/
-    scp /etc/kubernetes/kubelet-conf.yaml $NODE:/etc/kubernetes/
+    scp /var/lib/kubelet/config.yaml $NODE:/var/lib/kubelet/
     ssh $NODE "systemctl daemon-reload && systemctl enable --now kubelet"
 done
 ```

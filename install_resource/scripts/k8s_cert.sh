@@ -92,21 +92,21 @@ kube_config(){
 		--certificate-authority=/etc/kubernetes/pki/ca.pem \
 		--embed-certs=true \
 		--server=https://${K8S_MASTER_VIP}:${K8S_APISERVER_PORT}\
-		--kubeconfig=/etc/kubernetes/controller-manager.kubeconfig;
+		--kubeconfig=/etc/kubernetes/controller-manager.conf;
 
 	kubectl config set-context system:kube-controller-manager@kubernetes \
 		--cluster=kubernetes \
 		--user=system:kube-controller-manager \
-		--kubeconfig=/etc/kubernetes/controller-manager.kubeconfig;
+		--kubeconfig=/etc/kubernetes/controller-manager.conf;
 
 	kubectl config set-credentials system:kube-controller-manager \
 		--client-certificate=/etc/kubernetes/pki/controller-manager.pem \
 		--client-key=/etc/kubernetes/pki/controller-manager-key.pem \
 		--embed-certs=true \
-		--kubeconfig=/etc/kubernetes/controller-manager.kubeconfig;
+		--kubeconfig=/etc/kubernetes/controller-manager.conf;
 
 	kubectl config use-context system:kube-controller-manager@kubernetes \
-		--kubeconfig=/etc/kubernetes/controller-manager.kubeconfig;
+		--kubeconfig=/etc/kubernetes/controller-manager.conf;
 
 
 
@@ -115,21 +115,21 @@ kube_config(){
 		--certificate-authority=/etc/kubernetes/pki/ca.pem \
 		--embed-certs=true \
 		--server=https://${K8S_MASTER_VIP}:${K8S_APISERVER_PORT} \
-		--kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+		--kubeconfig=/etc/kubernetes/scheduler.conf
 
 	kubectl config set-context system:kube-scheduler@kubernetes \
 		--cluster=kubernetes \
 		--user=system:kube-scheduler \
-		--kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+		--kubeconfig=/etc/kubernetes/scheduler.conf
 
 	kubectl config set-credentials system:kube-scheduler \
 		--client-certificate=/etc/kubernetes/pki/scheduler.pem \
 		--client-key=/etc/kubernetes/pki/scheduler-key.pem \
 		--embed-certs=true \
-		--kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+		--kubeconfig=/etc/kubernetes/scheduler.conf
 
 	kubectl config use-context system:kube-scheduler@kubernetes \
-		--kubeconfig=/etc/kubernetes/scheduler.kubeconfig
+		--kubeconfig=/etc/kubernetes/scheduler.conf
 
 
 
@@ -138,22 +138,22 @@ kube_config(){
 		--certificate-authority=/etc/kubernetes/pki/ca.pem \
 		--embed-certs=true \
 		--server=https://${K8S_MASTER_VIP}:${K8S_APISERVER_PORT} \
-		--kubeconfig=/etc/kubernetes/admin.kubeconfig
+		--kubeconfig=/etc/kubernetes/admin.conf
 
 	kubectl config set-credentials kubernetes-admin \
 		--client-certificate=/etc/kubernetes/pki/admin.pem \
 		--client-key=/etc/kubernetes/pki/admin-key.pem \
 		--embed-certs=true \
-		--kubeconfig=/etc/kubernetes/admin.kubeconfig
+		--kubeconfig=/etc/kubernetes/admin.conf
 
 
 	kubectl config set-context kubernetes-admin@kubernetes \
 		--cluster=kubernetes \
 		--user=kubernetes-admin \
-		--kubeconfig=/etc/kubernetes/admin.kubeconfig
+		--kubeconfig=/etc/kubernetes/admin.conf
 
 	kubectl config use-context kubernetes-admin@kubernetes \
-		--kubeconfig=/etc/kubernetes/admin.kubeconfig
+		--kubeconfig=/etc/kubernetes/admin.conf
 }
 
 config_dir
