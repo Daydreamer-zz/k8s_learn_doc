@@ -1,8 +1,7 @@
 #!/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/root/bin
 K8S_MASTER_HOSTNAME=k8s-master01
-K8S_MASTER_IP=192.168.10.3
-K8S_MASTER_VIP=192.168.10.3
+K8S_MASTER_IPS=192.168.2.3
+K8S_MASTER_VIP=192.168.2.3
 K8S_SERVICE_IP=10.96.0.1
 K8S_APISERVER_PORT=6443
 CERT_CONFIG_DIR=/root/k8s_learn_doc/install_resource/k8s_pki_config
@@ -18,7 +17,7 @@ etcd_cert(){
 		-ca=/etc/kubernetes/pki/etcd/etcd-ca.pem \
 		-ca-key=/etc/kubernetes/pki/etcd/etcd-ca-key.pem \
 		-config=${CERT_CONFIG_DIR}/ca-config.json \
-		-hostname=127.0.0.1,${K8S_MASTER_HOSTNAME},${K8S_MASTER_IP} \
+		-hostname=127.0.0.1,${K8S_MASTER_HOSTNAME},${K8S_MASTER_IPS} \
 		-profile=kubernetes \
 		${CERT_CONFIG_DIR}/etcd-csr.json | cfssljson -bare /etc/kubernetes/pki/etcd/etcd;
 }
@@ -27,19 +26,19 @@ k8s_cert(){
 	cfssl gencert -initca ${CERT_CONFIG_DIR}/ca-csr.json | cfssljson -bare /etc/kubernetes/pki/ca;
 
 
-        if [ ${K8S_MASTER_IP} == ${K8S_MASTER_VIP} ]; then
+        if [ ${K8S_MASTER_IPS} == ${K8S_MASTER_VIP} ]; then
 
 		cfssl gencert -ca=/etc/kubernetes/pki/ca.pem \
 		    -ca-key=/etc/kubernetes/pki/ca-key.pem \
 			-config=${CERT_CONFIG_DIR}/ca-config.json \
-			-hostname=${K8S_SERVICE_IP},127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local,${K8S_MASTER_HOSTNAME},${K8S_MASTER_IP} \
+			-hostname=${K8S_SERVICE_IP},127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local,${K8S_MASTER_HOSTNAME},${K8S_MASTER_IPS} \
 		    -profile=kubernetes ${CERT_CONFIG_DIR}/apiserver-csr.json | cfssljson -bare /etc/kubernetes/pki/apiserver
 	else
 
 		cfssl gencert -ca=/etc/kubernetes/pki/ca.pem \
 		    -ca-key=/etc/kubernetes/pki/ca-key.pem \
 			-config=${CERT_CONFIG_DIR}/ca-config.json \
-			-hostname=${K8S_SERVICE_IP},127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local,${K8S_MASTER_HOSTNAME},${K8S_MASTER_VIP},${K8S_MASTER_IP} \
+			-hostname=${K8S_SERVICE_IP},127.0.0.1,kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.default.svc.cluster.local,${K8S_MASTER_HOSTNAME},${K8S_MASTER_VIP},${K8S_MASTER_IPS} \
 		    -profile=kubernetes ${CERT_CONFIG_DIR}/apiserver-csr.json | cfssljson -bare /etc/kubernetes/pki/apiserver
 	fi
 
