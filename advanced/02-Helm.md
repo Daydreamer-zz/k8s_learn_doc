@@ -29,11 +29,11 @@ Helm 是 Kubernetes 的包管理器，Helm 可以使用 Charts 启动 Kubernetes
 直接下载helm二级制包即可
 
 ```bash
-wget https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.12.3-linux-amd64.tar.gz
 ```
 
 ```bash
-tar xf helm-v3.6.3-linux-amd64.tar && mv linux-amd64/helm /usr/local/bin
+tar xf helm-v3.12.3-linux-amd64.tar && mv linux-amd64/helm /usr/local/bin
 ```
 
 配置命令自动补全

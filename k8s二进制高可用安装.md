@@ -12,7 +12,7 @@
 - `192.168.2.8` k8s-node02
 - `192.168.2.24` k8s-master-lb  (vip)
 
-其中，Node节点网段为`192.168.2.0/24`，k8s pod网段为`172.16.0.0/16`，service网段为`10.96.0.0/16`，kube-dns ip地址为`10.96.0.10`，k8s api vip地址为`192.168.2.24`，k8s service ip地址为`10.96.0.1`，kubernetes版本为`v1.20.11`，etcd版本为`v3.5.0`，helm版本为`v3.6.3`，calico版本为`v3.25.0`，您可以直接批量替这些ip或版本以适应您的环境。
+其中，Node节点网段为`192.168.2.0/24`，k8s pod网段为`172.16.0.0/16`，service网段为`10.96.0.0/16`，kube-dns ip地址为`10.96.0.10`，k8s api vip地址为`192.168.2.24`，k8s service ip地址为`10.96.0.1`，kubernetes版本为`v1.24.16`，etcd版本为`v3.5.9`，helm版本为`v3.12.3`，calico版本为`v3.25.0`，您可以直接批量替这些ip或版本以适应您的环境。
 
 ## 一、基础环境配置
 
@@ -488,17 +488,17 @@ openssl rsa -in /etc/kubernetes/pki/sa.key -pubout -out /etc/kubernetes/pki/sa.p
 #### 1.1 下载并解压
 
 ```bash
-wget https://dl.k8s.io/v1.20.11/kubernetes-server-linux-amd64.tar.gz
-wget https://github.com/etcd-io/etcd/releases/download/v3.5.0/etcd-v3.5.0-linux-amd64.tar.gz
-wget https://get.helm.sh/helm-v3.6.3-linux-amd64.tar.gz
+wget https://dl.k8s.io/v1.24.16/kubernetes-server-linux-amd64.tar.gz
+wget https://github.com/etcd-io/etcd/releases/download/v3.5.9/etcd-v3.5.9-linux-amd64.tar.gz
+wget https://get.helm.sh/helm-v3.12.3-linux-amd64.tar.gz
 ```
 
 ```bash
 tar -xf kubernetes-server-linux-amd64.tar.gz  --strip-components=3 -C /usr/local/bin kubernetes/server/bin/kube{let,ctl,-apiserver,-controller-manager,-scheduler,-proxy}
 
-tar -zxvf etcd-v3.5.0-linux-amd64.tar.gz --strip-components=1 -C /usr/local/bin etcd-v3.5.0-linux-amd64/etcd{,ctl}
+tar -zxvf etcd-v3.5.9-linux-amd64.tar.gz --strip-components=1 -C /usr/local/bin etcd-v3.5.9-linux-amd64/etcd{,ctl}
 
-tar xf helm-v3.6.3-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm
+tar xf helm-v3.12.3-linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin/helm
 ```
 
 #### 1.2 配置bash自动补全
