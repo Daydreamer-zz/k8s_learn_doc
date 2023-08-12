@@ -36,7 +36,7 @@ data:
       minSyncPeriod: 5s
       scheduler: "rr"
       syncPeriod: 30s
-      strictARP: false
+      strictARP: true
     kind: KubeProxyConfiguration
     metricsBindAddress: 127.0.0.1:10249
     mode: "ipvs"
@@ -50,7 +50,7 @@ data:
     clusters:
     - cluster:
         certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        server: https://192.168.10.3:6443
+        server: https://192.168.2.3:6443
       name: kubernetes
     contexts:
     - context:

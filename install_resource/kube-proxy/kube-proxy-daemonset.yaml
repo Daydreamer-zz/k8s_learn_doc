@@ -29,7 +29,7 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: spec.nodeName
-        image: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-proxy:v1.22.7
+        image: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-proxy:v1.24.16
         imagePullPolicy: IfNotPresent
         name: kube-proxy
         securityContext:
